@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成中医 2023级 2026秋 总课表（CSV数据驱动）</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    padding: 20px;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, #1a237e, #283593);
+    color: white;
+    padding: 24px 32px;
+    border-radius: 12px 12px 0 0;
+  }
+  .header h1 { font-size: 22px; margin-bottom: 6px; }
+  .header .subtitle { font-size: 13px; opacity: 0.9; }
+  .controls {
+    background: white;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .controls label { font-size: 14px; font-weight: 500; }
+  .week-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .week-btn {
+    min-width: 36px; height: 36px;
+    padding: 0 8px;
+    border: 1px solid #d9d9d9;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .week-btn:hover { border-color: #1a237e; color: #1a237e; }
+  .week-btn.active {
+    background: #1a237e;
+    color: white;
+    border-color: #1a237e;
+  }
+  .week-btn.has-class {
+    font-weight: bold;
+    position: relative;
+  }
+  .week-btn.has-class::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 4px;
+    background: #ff6b35;
+    border-radius: 50%;
+  }
+  .week-btn.active.has-class::after { background: white; }
+  .date-info {
+    margin-left: auto;
+    font-size: 14px;
+    color: #666;
+  }
+  .filter-bar {
+    background: white;
+    padding: 10px 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e8e8e8;
+    font-size: 13px;
+  }
+  .filter-label { font-weight: 500; color: #555; }
+  .filter-chip {
+    padding: 4px 12px;
+    border-radius: 14px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    background: white;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .filter-chip:hover { opacity: 0.8; }
+  .filter-chip.off { opacity: 0.35; text-decoration: line-through; }
+  .filter-chip .dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .group-filter {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .group-btn {
+    padding: 4px 12px;
+    border: 1px solid #d9d9d9;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .group-btn.active { background: #1a237e; color: white; border-color: #1a237e; }
+  .legend {
+    display: flex;
+    gap: 16px;
+    padding: 10px 32px;
+    background: #fafafa;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+  .schedule-grid {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 60px repeat(7, 1fr);
+    border: 1px solid #e8e8e8;
+    border-top: none;
+  }
+  .grid-header {
+    background: #f5f7fa;
+    padding: 10px 6px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+    border-right: 1px solid #e8e8e8;
+    border-bottom: 2px solid #1a237e;
+  }
+  .grid-header .date { font-size: 10px; color: #888; font-weight: normal; margin-top: 2px; }
+  .time-col {
+    background: #fafafa;
+    border-right: 1px solid #e8e8e8;
+  }
+  .time-slot {
+    height: 60px;
+    padding: 4px 4px;
+    font-size: 10px;
+    color: #888;
+    text-align: right;
+    border-bottom: 1px solid #f0f0f0;
+    line-height: 1.3;
+  }
+  .day-col {
+    border-right: 1px solid #e8e8e8;
+    position: relative;
+    min-height: 720px;
+  }
+  .day-col:last-child { border-right: none; }
+  .day-cell {
+    height: 60px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .course-card {
+    position: absolute;
+    left: 2px; right: 2px;
+    border-radius: 5px;
+    padding: 5px 7px;
+    font-size: 11px;
+    color: white;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    z-index: 2;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    border-left: 3px solid rgba(255,255,255,0.5);
+  }
+  .course-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    z-index: 10;
+  }
+  .course-card.practice {
+    border-left: 3px solid #fff;
+    border-style: dashed;
+    border-left-width: 3px;
+  }
+  .course-card .subject-tag {
+    font-size: 9px;
+    opacity: 0.85;
+    margin-bottom: 2px;
+    font-weight: 600;
+  }
+  .course-card .course-name {
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: 2px;
+  }
+  .course-card .course-meta {
+    font-size: 10px;
+    opacity: 0.9;
+    line-height: 1.3;
+  }
+  .course-card .group-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    margin-top: 2px;
+  }
+  .footer {
+    text-align: center;
+    padding: 16px;
+    color: #999;
+    font-size: 11px;
+  }
+  .stats {
+    background: white;
+    padding: 8px 32px;
+    font-size: 12px;
+    color: #666;
+    border-top: 1px solid #eee;
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .controls, .filter-bar, .legend { display: none; }
+    .header { border-radius: 0; }
+    .schedule-grid { border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>成都中医药大学 · 临床医学2023级宜宾二医院教学班</h1>
+    <div class="subtitle">2026-2027学年秋季学期 · 6门课总课表 · 理论+见习 · 教室：彭炳楼1A413 / 各临床科室</div>
+  </div>
+
+  <div class="controls">
+    <label>周次：</label>
+    <div class="week-selector" id="weekSelector"></div>
+    <div class="date-info" id="dateInfo"></div>
+  </div>
+
+  <div class="filter-bar">
+    <span class="filter-label">科目：</span>
+    <div id="subjectFilters"></div>
+    <div class="group-filter">
+      <span class="filter-label">组别：</span>
+      <button class="group-btn active" data-group="all" onclick="setGroup('all')">全部</button>
+      <button class="group-btn" data-group="1" onclick="setGroup('1')">第1组</button>
+      <button class="group-btn" data-group="2" onclick="setGroup('2')">第2组</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="schedule-grid" id="scheduleGrid"></div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="footer">数据来源于CSV · 点击周次切换 · 科目/组别筛选 · Ctrl+P打印导出PDF</div>
+</div>
+
+<script>
+// ----- 科目颜色映射 -----
+const subjectColors = {
+  "外科学": "#8e24aa",
+  "内科学": "#e53935",
+  "皮肤性病学": "#f9a825",
+  "耳鼻咽喉头颈外科学": "#00897b",
+  "传染病学": "#1a73e8",
+  "医学PBL": "#fb8c00"
+};
+
+// 学科分类映射
+const subjectMap = {
+  "外科": "外科学",
+  "内科": "内科学",
+  "皮肤": "皮肤性病学",
+  "耳鼻喉": "耳鼻咽喉头颈外科学",
+  "传染": "传染病学",
+  "PBL": "医学PBL"
+};
+
+// ----- 原始CSV数据（直接嵌入）-----
+const csvText = `周次,星期,开始时间,结束时间,课程名称,教师,教室,类型,学科分类
+1,1,8:00,10:20,颈部疾病（甲状腺疾病）,郑轲,彭炳楼1A413,理论,外科
+1,5,8:00,10:20,乳房疾病,郑轲,彭炳楼1A413,理论,外科
+2,1,14:30,16:50,腹外疝,罗坤,彭炳楼1A413,理论,外科
+2,5,8:00,10:20,腹部损伤（概论+常见内脏损伤）,黄荣森,彭炳楼1A413,理论,外科
+3,1,14:30,16:50,急性化脓性腹膜炎（腹膜炎+腹腔脓肿）,黄荣森,彭炳楼1A413,理论,外科
+3,5,8:00,10:20,胃十二指肠疾病（胃癌及其他胃肿瘤）,郑涛,彭炳楼1A413,理论,外科
+3,7,14:30,16:50,胃十二指肠溃疡的外科治疗,郑涛,彭炳楼1A413,理论,外科
+4,1,14:30,16:50,小肠疾病（肠梗阻）,杨晓波,彭炳楼1A413,理论,外科
+5,1,14:30,16:50,阑尾疾病,杨晓波,彭炳楼1A413,理论,外科
+6,5,8:00,10:20,结、直肠与肛管疾病（结肠癌+直肠癌）,邓小东,彭炳楼1A413,理论,外科
+6,6,8:00,10:20,肛裂、肛周脓肿、肛瘘、痔,邓兵,彭炳楼1A413,理论,外科
+7,1,14:30,16:50,肝疾病,余钰,彭炳楼1A413,理论,外科
+7,5,8:00,10:20,胆道疾病,余钰,彭炳楼1A413,理论,外科
+8,1,14:30,16:50,周围血管与淋巴疾病 + 中期学业指导,龚光,彭炳楼1A413,理论,外科
+8,5,8:00,10:20,颅内压增高和脑疝,徐小平,彭炳楼1A413,理论,外科
+9,1,14:30,16:50,颅脑损伤,邓青山,彭炳楼1A413,理论,外科
+9,5,8:00,10:20,胸部损伤,文兵,彭炳楼1A413,理论,外科
+10,1,14:30,16:50,肺疾病（肺肿瘤）+ 食管疾病（食管癌）,文兵,彭炳楼1A413,理论,外科
+10,5,8:00,10:20,泌尿、男性生殖系统疾病总论,陈孝彬,彭炳楼1A413,理论,外科
+11,1,14:30,16:50,泌尿系统损伤,陈孝彬,彭炳楼1A413,理论,外科
+11,5,8:00,10:20,泌尿、男性生殖系统感染,周建,彭炳楼1A413,理论,外科
+12,1,14:30,16:50,前列腺增生 + 尿路结石,江永浩,彭炳楼1A413,理论,外科
+12,5,8:00,10:20,泌尿、男性生殖系统肿瘤（肾、膀胱、前列腺癌）,马强,彭炳楼1A413,理论,外科
+13,1,14:30,16:50,骨折概论,宋玉光,彭炳楼1A413,理论,外科
+13,5,8:00,10:20,上肢骨、关节损伤,刘光大,彭炳楼1A413,理论,外科
+14,1,14:30,16:50,下肢骨、关节损伤,许鹏,彭炳楼1A413,理论,外科
+14,5,8:00,10:20,骨盆、髋臼骨折 + 脊柱、脊髓损伤,彭立鹏,彭炳楼1A413,理论,外科
+15,1,8:00,10:20,颈、腰椎退行性疾病（颈椎病+腰椎间盘突出症）,韩玉健,彭炳楼1A413,理论,外科
+15,5,8:00,10:20,骨与关节化脓性感染 + 骨与关节结核,樊志强,彭炳楼1A413,理论,外科
+16,1,8:00,10:20,骨肿瘤（总论+良性+骨巨细胞瘤+恶性）+期末反馈,宋润来,彭炳楼1A413,理论,外科
+3,2,14:30,17:40,"【第2组】乳腺甲状腺外科：颈部疾病、乳房疾病",吕红英/凌浩淞,乳腺甲状腺外科,见习,外科见习
+4,2,14:30,17:40,"【第1组】乳腺甲状腺外科：颈部疾病、乳房疾病",凌浩淞/吕红英,乳腺甲状腺外科,见习,外科见习
+5,2,14:30,17:40,"【第2组】胃肠疝外科：腹外疝、腹部损伤、胃十二指肠疾病等",张敬麟/彭孟寅,胃肠疝外科,见习,外科见习
+7,2,14:30,17:40,"【第1组】胃肠疝外科：腹外疝、腹部损伤、胃十二指肠疾病等",彭孟寅/张敬麟,胃肠疝外科,见习,外科见习
+8,2,14:30,17:40,"【第2组】胃肠疝外科：小肠疾病（肠梗阻）、阑尾疾病、结直肠肛管疾病",袁远洪/杨媛,胃肠疝外科,见习,外科见习
+9,2,14:30,17:40,"【第1组】胃肠疝外科：小肠疾病（肠梗阻）、阑尾疾病、结直肠肛管疾病",杨媛/袁远洪,胃肠疝外科,见习,外科见习
+10,2,14:30,17:40,"【第2组】血管外科：周围血管和淋巴管疾病",郑冬/刘盛智,血管外科,见习,外科见习
+10,3,14:30,17:40,"【第2组】神经外科：颅脑损伤",周开/张渊,神经外科,见习,外科见习
+11,2,14:30,17:40,"【第1组】血管外科：周围血管和淋巴管疾病",刘盛智/郑冬,血管外科,见习,外科见习
+11,3,14:30,17:40,"【第1组】神经外科：颅脑损伤",张渊/周开,神经外科,见习,外科见习
+12,2,14:30,17:40,"【第2组】肝胆胰外科：肝疾病",余钰/崔潇,肝胆胰外科,见习,外科见习
+12,3,14:30,17:40,"【第2组】胸心外科：胸部损伤、肺疾病（肺癌）、食管疾病（食管癌）",牟淋泉/刘金鑫,胸心外科,见习,外科见习
+13,2,14:30,17:40,"【第1组】肝胆胰外科：肝疾病",崔潇/余钰,肝胆胰外科,见习,外科见习
+13,3,14:30,17:40,"【第1组】胸心外科：胸部损伤、肺疾病（肺癌）、食管疾病（食管癌）",刘金鑫/牟淋泉,胸心外科,见习,外科见习
+14,2,14:30,17:40,"【第2组】肝胆胰外科：胆道疾病",张翼/余钰,肝胆胰外科,见习,外科见习
+14,3,14:30,17:40,"【第1组】手足显微外科：上肢骨、关节损伤、下肢骨、关节损伤",董洪先/夏波,手足显微外科,见习,外科见习
+14,3,14:30,17:40,"【第2组】泌尿外科：泌尿系统损伤、泌尿系统结石",钟蛟/陈文强,泌尿外科,见习,外科见习
+15,2,14:30,17:40,"【第1组】肝胆胰外科：胆道疾病",余钰/张翼,肝胆胰外科,见习,外科见习
+15,3,14:30,17:40,"【第1组】泌尿外科：泌尿系统损伤、泌尿系统结石",陈文强/钟蛟,泌尿外科,见习,外科见习
+15,3,14:30,17:40,"【第2组】手足显微外科：上肢骨、关节损伤、下肢骨、关节损伤",夏波/董洪先,手足显微外科,见习,外科见习
+16,2,14:30,17:40,"【第1组】骨科中心：脊柱、脊髓损伤、骨盆骨折、颈腰椎退行性疾病",彭立鹏/雷正亮,骨科中心,见习,外科见习
+16,3,14:30,17:40,"【第1组】骨科中心：骨与关节化脓性感染、骨肿瘤",罗长奇/罗洪胜,骨科中心,见习,外科见习
+16,3,14:30,17:40,"【第2组】泌尿外科：良性前列腺增生、泌尿男生殖系统肿瘤",车兴奎/白盛江,泌尿外科,见习,外科见习
+17,2,14:30,17:40,"【第2组】骨科中心：脊柱、脊髓损伤、骨盆骨折、颈腰椎退行性疾病",雷正亮/彭立鹏,骨科中心,见习,外科见习
+17,3,14:30,17:40,"【第1组】泌尿外科：良性前列腺增生、泌尿男生殖系统肿瘤",白盛江/车兴奎,泌尿外科,见习,外科见习
+17,3,14:30,17:40,"【第2组】骨科中心：骨与关节化脓性感染、骨肿瘤",罗洪胜/罗长奇,骨科中心,见习,外科见习
+17,4,14:30,16:00,见习总结（第1、2组）,余钰,彭炳楼1A413,见习,外科见习
+1,2,8:00,10:20,绪论 + 呼吸总论 + 慢支炎,熊昊,彭炳楼1A413,理论,内科
+1,4,8:00,10:20,消化总论（思政）+ 胃炎 + 消化性溃疡,曹敏,彭炳楼1A413,理论,内科
+2,1,8:00,10:20,"COPD + 支气管哮喘 + 肺部感染(1)",郑燕秋,彭炳楼1A413,理论,内科
+2,4,8:00,10:20,肝硬化(1),黄亚娜,彭炳楼1A413,理论,内科
+3,1,8:00,10:20,"肺部感染(2) + 肺结核",张艳琳,彭炳楼1A413,理论,内科
+3,4,8:00,10:20,急性胰腺炎(1)(2),唐欢,彭炳楼1A413,理论,内科
+3,7,8:00,10:20,肺癌 + 慢性肺源性心脏病,古晓娟,彭炳楼1A413,理论,内科
+4,1,8:00,10:20,肺血栓栓塞症 + 胸膜疾病,许海燕,彭炳楼1A413,理论,内科
+4,4,8:00,10:20,肝硬化(2) + 消化道出血,黄亚娜/唐欢,彭炳楼1A413,理论,内科
+5,1,8:00,10:20,呼吸衰竭与呼吸支持技术 + 中期学业指导,吕俊,彭炳楼1A413,理论,内科
+6,4,8:00,10:20,泌尿总论（思政）+ 肾小球病概述 + 急性肾小球肾炎 + IgA肾病,朱磊,彭炳楼1A413,理论,内科
+7,1,8:00,10:20,慢性肾小球肾炎 + 肾病综合征 + 尿路感染,张臣丽,彭炳楼1A413,理论,内科
+7,4,8:00,10:20,循环总论 + 心力衰竭(1),淡雪川,彭炳楼1A413,理论,内科
+8,1,8:00,10:20,慢性肾衰竭 + 再生障碍性贫血 + 白血病(1),唐前容/陈昌茜,彭炳楼1A413,理论,内科
+8,4,8:00,10:20,心力衰竭(2),梁超,彭炳楼1A413,理论,内科
+9,1,8:00,10:20,白血病(2) + 原发性免疫性血小板减少性紫癜,胡莲洁,彭炳楼1A413,理论,内科
+9,4,8:00,10:20,心律失常,赖银川,彭炳楼1A413,理论,内科
+10,1,8:00,10:20,内分泌总论 + 甲亢(1),郭艳艳,彭炳楼1A413,理论,内科
+10,4,8:00,10:20,冠心病(1),黄大岗,彭炳楼1A413,理论,内科
+11,1,8:00,10:20,甲亢(2) + 糖尿病(1),华燕,彭炳楼1A413,理论,内科
+11,4,8:00,10:20,冠心病(2),黄大岗,彭炳楼1A413,理论,内科
+12,1,8:00,10:20,糖尿病(2) + 糖尿病酮症酸中毒 + 高渗高血糖综合征 + 低血糖症,顾峻菱,彭炳楼1A413,理论,内科
+12,4,8:00,10:20,高血压(1),王艳,彭炳楼1A413,理论,内科
+13,1,8:00,10:20,风湿总论 + 类风湿关节炎,赵平,彭炳楼1A413,理论,内科
+13,4,8:00,10:20,高血压(2) + 心肌病,王艳/黄守莲,彭炳楼1A413,理论,内科
+14,1,8:00,10:20,系统性红斑狼疮（思政）+ 期末反馈,周进,彭炳楼1A413,理论,内科
+14,4,8:00,10:20,心脏瓣膜病,王娟,彭炳楼1A413,理论,内科
+3,2,14:30,17:40,"【第1组】呼吸与危重症医学科：慢支炎、COPD（思政）",李波/饶永琴,呼吸与危重症医学科,见习,内科见习
+4,2,14:30,17:40,"【第2组】呼吸与危重症医学科：慢支炎、COPD（思政）",饶永琴/李波,呼吸与危重症医学科,见习,内科见习
+5,2,14:30,17:40,"【第1组】呼吸与危重症医学科：肺部感染性疾病",贺丽/彭海英,呼吸与危重症医学科,见习,内科见习
+6,5,14:30,16:00,"【第1组】消化内科：消化性溃疡",李泽培/杨志慧,消化内科,见习,内科见习
+7,2,14:30,17:40,"【第2组】呼吸与危重症医学科：肺部感染性疾病",彭海英/贺丽,呼吸与危重症医学科,见习,内科见习
+7,5,14:30,16:00,"【第2组】消化内科：消化性溃疡",杨志慧/李泽培,消化内科,见习,内科见习
+8,2,14:30,17:40,"【第1组】呼吸与危重症医学科：肺癌",刘洪艳/王茂,呼吸与危重症医学科,见习,内科见习
+8,5,14:30,17:40,"【第1组】消化内科：急性胰腺炎",李泽培/杨志慧,消化内科,见习,内科见习
+9,2,14:30,17:40,"【第2组】呼吸与危重症医学科：肺癌",王茂/刘洪艳,呼吸与危重症医学科,见习,内科见习
+9,5,14:30,17:40,"【第2组】消化内科：急性胰腺炎",杨志慧/李泽培,消化内科,见习,内科见习
+10,2,14:30,17:40,"【第1组】心血管内科（临港）：心力衰竭",曾纪娟/周红,心血管内科,见习,内科见习
+11,2,14:30,17:40,"【第2组】心血管内科（临港）：心力衰竭",周红/曾纪娟,心血管内科,见习,内科见习
+11,4,14:30,17:40,"【第1组】南区肾病内科：原发性肾小球疾病、肾病综合征",张慧/代庆,南区肾病内科,见习,内科见习
+11,4,14:30,17:40,"【第2组】内分泌代谢科：甲状腺功能亢进症",刘欣/游成姗,内分泌代谢科,见习,内科见习
+12,2,14:30,17:40,"【第1组】心血管内科（临港）：冠心病",徐健/刘宇,心血管内科,见习,内科见习
+12,4,14:30,17:40,"【第1组】内分泌代谢科：甲状腺功能亢进症",游成姗/刘欣,内分泌代谢科,见习,内科见习
+12,4,14:30,17:40,"【第2组】南区肾病内科：原发性肾小球疾病、肾病综合征",代庆/张慧,南区肾病内科,见习,内科见习
+13,2,14:30,17:40,"【第2组】心血管内科（临港）：冠心病",刘宇/徐健,心血管内科,见习,内科见习
+13,4,14:30,17:40,"【第1组】南区肾病内科：尿路感染、慢性肾衰竭",赵茜/汪静,南区肾病内科,见习,内科见习
+13,4,14:30,17:40,"【第2组】内分泌代谢科：糖尿病",卢欢/周洪仿,内分泌代谢科,见习,内科见习
+14,2,14:30,17:40,"【第1组】心血管内科（临港）：高血压",颜治/徐娟,心血管内科,见习,内科见习
+14,4,14:30,17:40,"【第1组】内分泌代谢科：糖尿病",周洪仿/卢欢,内分泌代谢科,见习,内科见习
+14,4,14:30,17:40,"【第2组】南区肾病内科：尿路感染、慢性肾衰竭",汪静/赵茜,南区肾病内科,见习,内科见习
+15,2,14:30,17:40,"【第2组】心血管内科（临港）：高血压",徐娟/颜治,心血管内科,见习,内科见习
+15,4,14:30,17:40,"【第1组】南区血液内科：白血病",叶华觅/曹九芳,南区血液内科,见习,内科见习
+15,4,14:30,17:40,"【第2组】南区风湿免疫科：类风湿关节炎、系统性红斑狼疮",赵平/古金华,南区风湿免疫科,见习,内科见习
+16,4,14:30,17:40,"【第1组】南区风湿免疫科：类风湿关节炎、系统性红斑狼疮",古金华/赵平,南区风湿免疫科,见习,内科见习
+16,4,14:30,17:40,"【第2组】南区血液内科：白血病",曹九芳/叶华觅,南区血液内科,见习,内科见习
+1,3,8:00,10:20,皮肤的结构、皮肤性病的临床表现,张蕾,彭炳楼1A413,理论,皮肤
+2,3,8:00,10:20,皮肤性病的治疗、病毒性皮肤病,张蕾,彭炳楼1A413,理论,皮肤
+3,3,8:00,10:20,细菌性皮肤病、真菌性皮肤病,邓英键,彭炳楼1A413,理论,皮肤
+4,3,8:00,10:20,接触性皮炎、湿疹、荨麻疹,杨如学,彭炳楼1A413,理论,皮肤
+5,3,8:00,10:20,药疹、银屑病,杨如学,彭炳楼1A413,理论,皮肤
+7,3,8:00,10:20,性传播疾病概述、梅毒、淋病,邓英键,彭炳楼1A413,理论,皮肤
+8,3,8:50,11:10,"【第2组】见习：常见皮肤科实验室检查技术、皮损读片",何永萍/蒲玉平,北大街院区皮肤科,见习,皮肤见习
+9,3,8:50,11:10,"【第1组】见习：常见皮肤科实验室检查技术、皮损读片",蒲玉平/何永萍,北大街院区皮肤科,见习,皮肤见习
+10,3,8:50,11:10,"【第2组】见习：临床病例观摩、皮损识别、参观临床仪器使用",何永萍/蒲玉平,北大街院区皮肤科,见习,皮肤见习
+11,3,8:50,11:10,"【第1组】见习：临床病例观摩、皮损识别、参观临床仪器使用",蒲玉平/何永萍,北大街院区皮肤科,见习,皮肤见习
+12,3,8:00,10:20,病案分析及讨论（第1、2组）,何永萍/蒲玉平,彭炳楼1A413,见习,皮肤见习
+1,3,14:30,16:50,绪论 + 鼻科学应用解剖及生理 + 鼻外伤,陈兵,彭炳楼1A413,理论,耳鼻喉
+2,3,14:30,16:50,慢性鼻窦炎 + 咽科学 + 扁桃体炎,彭琳,彭炳楼1A413,理论,耳鼻喉
+3,3,14:30,16:50,喉肿瘤 + 喉阻塞 + 颈部应用解剖/先天/炎性疾病,孙晓强,彭炳楼1A413,理论,耳鼻喉
+4,3,14:30,16:50,中期学业指导 + 咽科学 + 喉科学,杜聃,彭炳楼1A413,理论,耳鼻喉
+5,3,14:30,16:50,气管食管科学（解剖+异物）+ 耳科学应用解剖及生理,李其银,彭炳楼1A413,理论,耳鼻喉
+7,3,14:30,16:50,期末反馈 + 中耳炎性疾病 + 耳聋及防治,周浩,彭炳楼1A413,理论,耳鼻喉
+8,3,14:30,16:50,"【第1组】耳鼻喉咽喉科常规检查（耳部及鼻部）实验",张小平/吴艾琳,耳鼻咽喉科,见习,耳鼻喉见习
+9,3,14:30,16:50,"【第2组】耳鼻喉咽喉科常规检查（耳部及鼻部）实验",吴艾琳/张小平,耳鼻咽喉科,见习,耳鼻喉见习
+10,3,14:30,16:50,"【第1组】耳鼻喉咽喉科常规检查（咽喉部及颈部）实验",张小平/黄成,耳鼻咽喉科,见习,耳鼻喉见习
+11,3,14:30,16:50,"【第2组】耳鼻喉咽喉科常规检查（咽喉部及颈部）实验",黄成/张小平,耳鼻咽喉科,见习,耳鼻喉见习
+12,3,14:30,16:50,"【第1组】耳鼻喉科内镜检查及耳部特殊仪器检查",张小平/张进,耳鼻咽喉科,见习,耳鼻喉见习
+13,3,14:30,16:50,"【第2组】耳鼻喉科内镜检查及耳部特殊仪器检查",张进/张小平,耳鼻咽喉科,见习,耳鼻喉见习
+2,5,14:30,16:50,"【第1组】案例2：第一幕",朱磊,彭炳楼1A413,理论,PBL
+3,2,8:00,10:20,"【第1组】案例2：第二幕",朱磊,彭炳楼1A413,理论,PBL
+4,2,8:00,10:20,"【第1组】案例2：第三幕、中期学业指导",朱磊,彭炳楼1A413,理论,PBL
+5,2,8:00,10:20,"【第2组】案例2：第一幕",朱磊,彭炳楼1A413,理论,PBL
+7,2,8:00,10:20,"【第2组】案例2：第二幕",朱磊,彭炳楼1A413,理论,PBL
+8,2,8:00,10:20,"【第2组】案例2：第三幕、中期学业指导",朱磊,彭炳楼1A413,理论,PBL
+9,2,8:00,10:20,"【第1组】案例1：第一幕",余钰,彭炳楼1A413,理论,PBL
+10,2,8:00,10:20,"【第1组】案例1：第二幕",余钰,彭炳楼1A413,理论,PBL
+11,2,8:00,10:20,"【第1组】案例1：第三幕、期末反馈",余钰,彭炳楼1A413,理论,PBL
+12,2,8:00,10:20,"【第2组】案例1：第一幕",余钰,彭炳楼1A413,理论,PBL
+13,2,8:00,10:20,"【第2组】案例1：第二幕",余钰,彭炳楼1A413,理论,PBL
+14,2,8:00,10:20,"【第2组】案例1：第三幕、期末反馈",余钰,彭炳楼1A413,理论,PBL
+1,4,14:30,16:50,传染病学总论（思政）,李文全,彭炳楼1A413,理论,传染
+2,4,14:30,16:50,病毒性肝炎（1）（思政）,邱邦东,彭炳楼1A413,理论,传染
+3,4,14:30,16:50,病毒性肝炎（2）,邱邦东,彭炳楼1A413,理论,传染
+4,4,14:30,16:50,流行性感冒（思政）+ 肾综合征出血热,陈超,彭炳楼1A413,理论,传染
+6,4,14:30,16:50,艾滋病（1）（思政）,聂双全,彭炳楼1A413,理论,传染
+7,4,14:30,16:50,艾滋病（2）+ 中期学业指导,聂双全,彭炳楼1A413,理论,传染
+8,4,14:30,16:50,流行性乙型脑炎 + 细菌性痢疾,李廷东,彭炳楼1A413,理论,传染
+9,4,14:30,16:50,流行性脑脊髓膜炎 + 钩端螺旋体病（1）,陈兆桃,彭炳楼1A413,理论,传染
+10,4,14:30,16:50,疟疾（思政）+ 期末反馈,陈超,彭炳楼1A413,理论,传染
+6,5,14:30,16:50,"【第2组】见习：病毒性肝炎",车梦/李旭,感染性疾病中心,见习,传染见习
+7,5,14:30,16:50,"【第1组】见习：病毒性肝炎",李旭/车梦,感染性疾病中心,见习,传染见习
+8,5,14:30,16:50,"【第2组】见习：艾滋病",吴家亮/刘娟,感染性疾病中心,见习,传染见习
+9,5,14:30,16:50,"【第1组】见习：艾滋病",刘娟/吴家亮,感染性疾病中心,见习,传染见习
+10,5,14:30,16:50,病案讨论（病毒性肝炎、艾滋病）第1、2组,车梦/吴家亮,彭炳楼1A413,见习,传染见习`;
+
+// ----- 解析CSV -----
+function parseCSV(text) {
+  const lines = text.split('\n').filter(line => line.trim() !== '');
+  const header = lines[0].split(',');
+  const result = [];
+  for (let i = 1; i < lines.length; i++) {
+    const row = parseCSVLine(lines[i]);
+    if (row.length < 9) continue;
+    const obj = {
+      week: parseInt(row[0]),
+      day: parseInt(row[1]),
+      start: row[2].trim(),
+      end: row[3].trim(),
+      name: row[4].trim(),
+      teacher: row[5].trim(),
+      classroom: row[6].trim(),
+      type: row[7].trim() === '见习' ? 'practice' : 'theory',
+      subjectRaw: row[8].trim()
+    };
+    // 映射学科分类
+    let subject = subjectMap[obj.subjectRaw] || obj.subjectRaw;
+    // 处理“外科见习”等，映射到“外科学”
+    if (obj.subjectRaw.includes('外科见习')) subject = '外科学';
+    else if (obj.subjectRaw.includes('内科见习')) subject = '内科学';
+    else if (obj.subjectRaw.includes('皮肤见习')) subject = '皮肤性病学';
+    else if (obj.subjectRaw.includes('耳鼻喉见习')) subject = '耳鼻咽喉头颈外科学';
+    else if (obj.subjectRaw.includes('传染见习')) subject = '传染病学';
+    obj.subject = subject;
+    // 提取组别
+    const groupMatch = obj.name.match(/【第([1-2])组】|第([1-2])组|第1、2组/);
+    if (groupMatch) {
+      if (groupMatch[0] === '第1、2组') obj.group = '第1、2组';
+      else obj.group = '第' + (groupMatch[1] || groupMatch[2]) + '组';
+    } else {
+      obj.group = '';
+    }
+    // 保留完整名称
+    obj.full_name = obj.name;
+    result.push(obj);
+  }
+  return result;
+}
+
+function parseCSVLine(line) {
+  const parts = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      parts.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  parts.push(current);
+  return parts;
+}
+
+// 生成课程数据
+const courses = parseCSV(csvText);
+
+// ----- 渲染逻辑（与原HTML一致）-----
+const TOTAL_WEEKS = 17;
+const DAY_NAMES = ['周一','周二','周三','周四','周五','周六','周日'];
+const START_HOUR = 8;
+const END_HOUR = 20;
+const HOUR_HEIGHT = 60;
+const SEMESTER_START = new Date('2026-08-31');
+
+let currentWeek = 1;
+let hiddenSubjects = new Set();
+let currentGroup = 'all';
+
+function getWeekDates(weekNum) {
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(SEMESTER_START);
+    d.setDate(d.getDate() + (weekNum - 1) * 7 + i);
+    dates.push(d);
+  }
+  return dates;
+}
+function formatDate(d) { return `${d.getMonth()+1}/${d.getDate()}`; }
+function timeToMinutes(t) {
+  if (!t) return 0;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + (m || 0);
+}
+
+function renderWeekSelector() {
+  const container = document.getElementById('weekSelector');
+  const weeksWithClass = new Set(courses.map(c => c.week));
+  container.innerHTML = '';
+  for (let w = 1; w <= TOTAL_WEEKS; w++) {
+    const btn = document.createElement('button');
+    btn.className = 'week-btn' + (w === currentWeek ? ' active' : '') + (weeksWithClass.has(w) ? ' has-class' : '');
+    btn.textContent = w;
+    btn.onclick = () => { currentWeek = w; renderAll(); };
+    container.appendChild(btn);
+  }
+}
+
+function renderDateInfo() {
+  const dates = getWeekDates(currentWeek);
+  document.getElementById('dateInfo').textContent =
+    `第${currentWeek}周 · ${formatDate(dates[0])} - ${formatDate(dates[6])}`;
+}
+
+function renderSubjectFilters() {
+  const container = document.getElementById('subjectFilters');
+  const subjects = [...new Set(courses.map(c => c.subject))];
+  container.innerHTML = '';
+  subjects.forEach(s => {
+    const chip = document.createElement('span');
+    chip.className = 'filter-chip' + (hiddenSubjects.has(s) ? ' off' : '');
+    chip.innerHTML = `<span class="dot" style="background:${subjectColors[s]||'#999'}"></span>${s}`;
+    chip.onclick = () => {
+      if (hiddenSubjects.has(s)) hiddenSubjects.delete(s);
+      else hiddenSubjects.add(s);
+      renderAll();
+    };
+    container.appendChild(chip);
+  });
+}
+
+function renderLegend() {
+  const container = document.getElementById('legend');
+  const subjects = [...new Set(courses.map(c => c.subject))];
+  let html = '';
+  subjects.forEach(s => {
+    html += `<div class="legend-item"><div class="legend-dot" style="background:${subjectColors[s]||'#999'}"></div>${s}</div>`;
+  });
+  html += `<div class="legend-item"><div class="legend-dot" style="background:#fff;border:2px dashed #999"></div>见习课(虚线边)</div>`;
+  container.innerHTML = html;
+}
+
+function setGroup(g) {
+  currentGroup = g;
+  document.querySelectorAll('.group-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.group === g);
+  });
+  renderAll();
+}
+
+function getFilteredCourses() {
+  return courses.filter(c => {
+    if (hiddenSubjects.has(c.subject)) return false;
+    if (currentGroup !== 'all' && c.group) {
+      if (c.group.includes('第1、2组') || c.group.includes('第1,2组')) return true;
+      if (currentGroup === '1' && !c.group.includes('1')) return false;
+      if (currentGroup === '2' && !c.group.includes('2')) return false;
+    }
+    return true;
+  });
+}
+
+function renderGrid() {
+  const grid = document.getElementById('scheduleGrid');
+  const dates = getWeekDates(currentWeek);
+  const filtered = getFilteredCourses();
+  const weekCourses = filtered.filter(c => c.week === currentWeek);
+
+  let html = '';
+  html += '<div class="grid-header" style="border-bottom:2px solid #1a237e">时间</div>';
+  for (let i = 0; i < 7; i++) {
+    html += `<div class="grid-header">${DAY_NAMES[i]}<div class="date">${formatDate(dates[i])}</div></div>`;
+  }
+
+  html += '<div class="time-col">';
+  for (let h = START_HOUR; h < END_HOUR; h++) {
+    html += `<div class="time-slot">${h}:00</div>`;
+  }
+  html += '</div>';
+
+  for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+    const dayNum = dayIdx + 1;
+    const dayCourses = weekCourses.filter(c => c.day === dayNum);
+    html += '<div class="day-col">';
+    for (let h = START_HOUR; h < END_HOUR; h++) {
+      html += '<div class="day-cell"></div>';
+    }
+    dayCourses.forEach(c => {
+      const startMin = timeToMinutes(c.start);
+      const endMin = timeToMinutes(c.end);
+      const top = ((startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+      const height = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT - 3, 30);
+      const color = subjectColors[c.subject] || '#666';
+      const isPrac = c.type === 'practice';
+      const groupHtml = c.group ? `<span class="group-tag">${c.group}</span>` : '';
+      // 显示简短的名称（如果有换行只取第一行）
+      const displayName = c.name.split('\n')[0];
+      html += `
+        <div class="course-card ${isPrac?'practice':''}" style="top:${top}px; height:${height}px; background:linear-gradient(135deg, ${color}, ${color}dd);"
+             title="${c.subject}\n${c.full_name}\n教师：${c.teacher}\n时间：${c.start}-${c.end}\n组别：${c.group||'全班'}">
+          <div class="subject-tag">${c.subject}${isPrac?' · 见习':''}</div>
+          <div class="course-name">${displayName}</div>
+          <div class="course-meta">👤 ${c.teacher}<br>⏰ ${c.start}-${c.end}</div>
+          ${groupHtml}
+        </div>`;
+    });
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function renderStats() {
+  const filtered = getFilteredCourses();
+  const weekCourses = filtered.filter(c => c.week === currentWeek);
+  const theoryCount = weekCourses.filter(c => c.type === 'theory').length;
+  const practiceCount = weekCourses.filter(c => c.type === 'practice').length;
+  document.getElementById('stats').textContent =
+    `第${currentWeek}周共 ${weekCourses.length} 节课（理论 ${theoryCount} · 见习 ${practiceCount}）`;
+}
+
+function renderAll() {
+  renderWeekSelector();
+  renderDateInfo();
+  renderSubjectFilters();
+  renderLegend();
+  renderGrid();
+  renderStats();
+}
+renderAll();
+</script>
+</body>
+</html>

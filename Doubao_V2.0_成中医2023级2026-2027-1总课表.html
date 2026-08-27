@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成中医 2023级 2026-2027-1 总课表</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    padding: 20px;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, #1a73e8, #4285f4);
+    color: white;
+    padding: 24px 32px;
+    border-radius: 12px 12px 0 0;
+  }
+  .header h1 { font-size: 22px; margin-bottom: 6px; }
+  .header .subtitle { font-size: 13px; opacity: 0.92; line-height: 1.6; }
+  .controls {
+    background: white;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .controls label { font-size: 14px; font-weight: 500; }
+  .week-selector {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .week-btn {
+    width: 34px; height: 34px;
+    border: 1px solid #d9d9d9;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .week-btn:hover { border-color: #1a73e8; color: #1a73e8; }
+  .week-btn.active {
+    background: #1a73e8;
+    color: white;
+    border-color: #1a73e8;
+  }
+  .week-btn.has-class {
+    font-weight: bold;
+    position: relative;
+  }
+  .week-btn.has-class::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 4px;
+    background: #ff6b35;
+    border-radius: 50%;
+  }
+  .week-btn.active.has-class::after { background: white; }
+  .date-info {
+    margin-left: auto;
+    font-size: 14px;
+    color: #666;
+  }
+  .legend {
+    display: flex;
+    gap: 18px;
+    padding: 12px 32px;
+    background: #fafafa;
+    font-size: 13px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+  }
+  .legend-dot.practice {
+    background: repeating-linear-gradient(45deg, transparent 0 3px, rgba(0,0,0,0.08) 3px 6px);
+    border: 2px solid #999;
+  }
+  .legend-divider { width: 1px; height: 18px; background: #ddd; }
+  .legend-note { color: #888; font-size: 12px; }
+  .schedule-grid {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 70px repeat(7, 1fr);
+    border: 1px solid #e8e8e8;
+    border-top: none;
+  }
+  .grid-header {
+    background: #f5f7fa;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+    border-right: 1px solid #e8e8e8;
+    border-bottom: 2px solid #1a73e8;
+  }
+  .grid-header .date { font-size: 11px; color: #888; font-weight: normal; margin-top: 2px; }
+  .grid-header.today { background: #e8f0fe; color: #1a73e8; }
+  .time-col {
+    background: #fafafa;
+    border-right: 1px solid #e8e8e8;
+    position: relative;
+  }
+  .time-slot {
+    height: 60px;
+    padding: 4px 6px;
+    font-size: 11px;
+    color: #888;
+    text-align: right;
+    border-bottom: 1px solid #f0f0f0;
+    line-height: 1.3;
+  }
+  .day-col {
+    border-right: 1px solid #e8e8e8;
+    position: relative;
+    min-height: 600px;
+  }
+  .day-col:last-child { border-right: none; }
+  .day-cell {
+    height: 60px;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+  }
+  .course-card {
+    position: absolute;
+    left: 3px; right: 3px;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: white;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
+  .course-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 10;
+  }
+  .course-card.practice {
+    border: 1px solid #ccc;
+    border-left-width: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .course-card .course-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+  .course-card .course-meta {
+    font-size: 11px;
+    opacity: 0.92;
+    line-height: 1.4;
+  }
+  .course-card .badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-bottom: 3px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .course-card.theory .badge { background: rgba(255,255,255,0.25); }
+  .course-card.practice .badge { background: rgba(0,0,0,0.06); }
+  .course-card.narrow { padding: 6px 6px; }
+  .course-card.narrow .course-name { font-size: 11px; margin-bottom: 2px; }
+  .course-card.narrow .course-meta { display: none; }
+  .empty-state {
+    grid-column: 1 / -1;
+    padding: 60px;
+    text-align: center;
+    color: #999;
+    font-size: 15px;
+  }
+  .empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: #999;
+    font-size: 12px;
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .controls, .legend { display: none; }
+    .header { border-radius: 0; }
+    .schedule-grid { border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>成都中医药大学 · 临床医学2023级宜宾二医院教学班</h1>
+    <div class="subtitle">2026—2027学年第一学期 六科合排总课表 · 内科学 / 外科学 / 传染病学 / 医学PBL / 皮肤性病学 / 耳鼻咽喉头颈外科学 · 第1—17周</div>
+  </div>
+  <div class="controls">
+    <label>周次：</label>
+    <div class="week-selector" id="weekSelector"></div>
+    <div class="date-info" id="dateInfo"></div>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="schedule-grid" id="scheduleGrid"></div>
+  <div class="footer">数据来源：成都中医药大学2026学年秋季学期各科教学日历表（6科 docx） · 点击周次按钮切换查看 · 同时间并行课程左右并排显示 · 可直接浏览器打印导出PDF</div>
+</div>
+<script>
+// ===== 学科配色 =====
+const SUBJECTS = {
+  '\u5185\u79d1\u5b66':   { main:'#1a73e8', grad:'#4285f4', light:'#e8f0fe', text:'#1a5bb0' },
+  '\u5916\u79d1\u5b66':   { main:'#0f9d58', grad:'#34a853', light:'#e6f4ea', text:'#0b7a44' },
+  '\u4f20\u67d3\u75c5\u5b66': { main:'#d93025', grad:'#f05a48', light:'#fce8e6', text:'#b3261e' },
+  '\u533b\u5b66PBL':  { main:'#7b1fa2', grad:'#9c27b0', light:'#f3e8fd', text:'#6a1b9a' },
+  '\u76ae\u80a4\u6027\u75c5\u5b66': { main:'#00897b', grad:'#26a69a', light:'#e0f2f1', text:'#007a6c' },
+  '\u8033\u9f3b\u54bd\u5589\u5934\u9888\u5916\u79d1\u5b66': { main:'#ef6c00', grad:'#fb8c00', light:'#fff3e0', text:'#c85a00' },
+};
+
+// ===== 课程数据（从6份docx提取）=====
+// 字段：week周次, day星期(1-7), start, end, name, teacher, room, type(theory/practice), subject
+const courses = [
+  // ---------- 内科学 · 理论 ----------
+  { week:1,  day:2, start:'8:00',  end:'10:20', name:'绪论 · 呼吸系统总论 · 慢支炎', teacher:'熊昊', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:1,  day:4, start:'8:00',  end:'10:20', name:'消化系统总论 · 胃炎 · 消化性溃疡', teacher:'曹敏', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:2,  day:1, start:'8:00',  end:'10:20', name:'慢阻肺 · 支气管哮喘 · 肺部感染性疾病(1)', teacher:'郑燕秋', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:2,  day:4, start:'8:00',  end:'10:20', name:'肝硬化(1)', teacher:'黄亚娜', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:3,  day:1, start:'8:00',  end:'10:20', name:'肺部感染性疾病(2) · 肺结核', teacher:'张艳琳', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:3,  day:4, start:'8:00',  end:'10:20', name:'急性胰腺炎(1)(2)', teacher:'唐欢', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:3,  day:7, start:'8:00',  end:'10:20', name:'肺癌 · 慢性肺源性心脏病', teacher:'古晓娟', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:4,  day:1, start:'8:00',  end:'10:20', name:'肺血栓栓塞症 · 胸膜疾病', teacher:'许海燕', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:4,  day:4, start:'8:00',  end:'10:20', name:'肝硬化(2) · 消化道出血', teacher:'黄亚娜/唐欢', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:5,  day:1, start:'8:00',  end:'10:20', name:'呼吸衰竭与呼吸支持技术 · 中期学业指导', teacher:'吕俊', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:6,  day:4, start:'8:00',  end:'10:20', name:'泌尿系统总论 · 肾小球病概述/急性肾炎 · IgA肾病', teacher:'朱磊', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:7,  day:1, start:'8:00',  end:'10:20', name:'慢性肾小球肾炎 · 肾病综合征 · 尿路感染', teacher:'张臣丽', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:7,  day:4, start:'8:00',  end:'10:20', name:'循环系统总论 · 心力衰竭(1)', teacher:'淡雪川', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:8,  day:1, start:'8:00',  end:'10:20', name:'慢性肾衰竭 · 再生障碍性贫血 · 白血病(1)', teacher:'唐前容/陈昌茜', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:8,  day:4, start:'8:00',  end:'10:20', name:'心力衰竭(2)', teacher:'梁超', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:9,  day:1, start:'8:00',  end:'10:20', name:'白血病(2) · 原发性免疫性血小板减少性紫癜', teacher:'胡莲洁', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:9,  day:4, start:'8:00',  end:'10:20', name:'心律失常', teacher:'赖银川', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:10, day:1, start:'8:00',  end:'10:20', name:'内分泌系统总论 · 甲状腺功能亢进症(1)', teacher:'郭艳艳', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:10, day:4, start:'8:00',  end:'10:20', name:'冠心病(1)', teacher:'黄大岗', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:11, day:1, start:'8:00',  end:'10:20', name:'甲状腺功能亢进症(2) · 糖尿病(1)', teacher:'华燕', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:11, day:4, start:'8:00',  end:'10:20', name:'冠心病(2)', teacher:'黄大岗', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:12, day:1, start:'8:00',  end:'10:20', name:'糖尿病(2) · 糖尿病酮症酸中毒 · 高渗高血糖综合征 · 低血糖症', teacher:'顾峻菱', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:12, day:4, start:'8:00',  end:'10:20', name:'高血压(1)', teacher:'王艳', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:13, day:1, start:'8:00',  end:'10:20', name:'风湿性疾病总论 · 类风湿关节炎', teacher:'赵平', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:13, day:4, start:'8:00',  end:'10:20', name:'高血压(2) · 心肌病', teacher:'王艳/黄守莲', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:14, day:1, start:'8:00',  end:'10:20', name:'系统性红斑狼疮 · 期末考试反馈', teacher:'周进', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  { week:14, day:4, start:'8:00',  end:'10:20', name:'心脏瓣膜病', teacher:'王娟', room:'彭炳楼1A413', type:'theory', subject:'内科学' },
+  // ---------- 内科学 · 见习 ----------
+  { week:3,  day:2, start:'14:30', end:'17:40', name:'呼吸与危重症医学科：慢支、慢阻肺【第1组】', teacher:'李波/饶永琴', room:'呼吸与危重症医学科', type:'practice', subject:'内科学' },
+  { week:4,  day:2, start:'14:30', end:'17:40', name:'呼吸与危重症医学科：慢支、慢阻肺【第2组】', teacher:'饶永琴/李波', room:'呼吸与危重症医学科', type:'practice', subject:'内科学' },
+  { week:5,  day:2, start:'14:30', end:'17:40', name:'呼吸与危重症医学科：肺部感染性疾病【第1组】', teacher:'贺丽/彭海英', room:'呼吸与危重症医学科', type:'practice', subject:'内科学' },
+  { week:6,  day:5, start:'14:30', end:'16:00', name:'消化内科：消化性溃疡【第1组】', teacher:'李泽培/杨志慧', room:'消化内科', type:'practice', subject:'内科学' },
+  { week:7,  day:2, start:'14:30', end:'17:40', name:'呼吸与危重症医学科：肺部感染性疾病【第2组】', teacher:'彭海英/贺丽', room:'呼吸与危重症医学科', type:'practice', subject:'内科学' },
+  { week:7,  day:5, start:'14:30', end:'16:00', name:'消化内科：消化性溃疡【第2组】', teacher:'杨志慧/李泽培', room:'消化内科', type:'practice', subject:'内科学' },
+  { week:8,  day:2, start:'14:30', end:'17:40', name:'呼吸与危重症医学科：肺癌【第1组】', teacher:'刘洪艳/王茂', room:'呼吸与危重症医学科', type:'practice', subject:'内科学' },
+  { week:8,  day:5, start:'14:30', end:'17:40', name:'消化内科：急性胰腺炎【第1组】', teacher:'李泽培/杨志慧', room:'消化内科', type:'practice', subject:'内科学' },
+  { week:9,  day:2, start:'14:30', end:'17:40', name:'呼吸与危重症医学科：肺癌【第2组】', teacher:'王茂/刘洪艳', room:'呼吸与危重症医学科', type:'practice', subject:'内科学' },
+  { week:9,  day:5, start:'14:30', end:'17:40', name:'消化内科：急性胰腺炎【第2组】', teacher:'杨志慧/李泽培', room:'消化内科', type:'practice', subject:'内科学' },
+  { week:10, day:2, start:'14:30', end:'17:40', name:'心血管内科（临港）：心力衰竭【第1组】', teacher:'曾纪娟/周红', room:'心血管内科（临港）', type:'practice', subject:'内科学' },
+  { week:11, day:2, start:'14:30', end:'17:40', name:'心血管内科（临港）：心力衰竭【第2组】', teacher:'周红/曾纪娟', room:'心血管内科（临港）', type:'practice', subject:'内科学' },
+  { week:11, day:4, start:'14:30', end:'17:40', name:'南区肾病内科：原发性肾小球疾病、肾病综合征【第1组】', teacher:'张慧/代庆', room:'南区肾病内科', type:'practice', subject:'内科学' },
+  { week:11, day:4, start:'14:30', end:'17:40', name:'内分泌代谢科：甲状腺功能亢进症【第2组】', teacher:'刘欣/游成姗', room:'内分泌代谢科', type:'practice', subject:'内科学' },
+  { week:12, day:2, start:'14:30', end:'17:40', name:'心血管内科（临港）：冠心病【第1组】', teacher:'徐健/刘宇', room:'心血管内科（临港）', type:'practice', subject:'内科学' },
+  { week:12, day:4, start:'14:30', end:'17:40', name:'内分泌代谢科：甲状腺功能亢进症【第1组】', teacher:'游成姗/刘欣', room:'内分泌代谢科', type:'practice', subject:'内科学' },
+  { week:12, day:4, start:'14:30', end:'17:40', name:'南区肾病内科：原发性肾小球疾病、肾病综合征【第2组】', teacher:'代庆/张慧', room:'南区肾病内科', type:'practice', subject:'内科学' },
+  { week:13, day:2, start:'14:30', end:'17:40', name:'心血管内科（临港）：冠心病【第2组】', teacher:'刘宇/徐健', room:'心血管内科（临港）', type:'practice', subject:'内科学' },
+  { week:13, day:4, start:'14:30', end:'17:40', name:'南区肾病内科：尿路感染、慢性肾衰竭【第1组】', teacher:'赵茜/汪静', room:'南区肾病内科', type:'practice', subject:'内科学' },
+  { week:13, day:4, start:'14:30', end:'17:40', name:'内分泌代谢科：糖尿病【第2组】', teacher:'卢欢/周洪仿', room:'内分泌代谢科', type:'practice', subject:'内科学' },
+  { week:14, day:2, start:'14:30', end:'17:40', name:'心血管内科（临港）：高血压【第1组】', teacher:'颜治/徐娟', room:'心血管内科（临港）', type:'practice', subject:'内科学' },
+  { week:14, day:4, start:'14:30', end:'17:40', name:'内分泌代谢科：糖尿病【第1组】', teacher:'周洪仿/卢欢', room:'内分泌代谢科', type:'practice', subject:'内科学' },
+  { week:14, day:4, start:'14:30', end:'17:40', name:'南区肾病内科：尿路感染、慢性肾衰竭【第2组】', teacher:'汪静/赵茜', room:'南区肾病内科', type:'practice', subject:'内科学' },
+  { week:15, day:2, start:'14:30', end:'17:40', name:'心血管内科（临港）：高血压【第2组】', teacher:'徐娟/颜治', room:'心血管内科（临港）', type:'practice', subject:'内科学' },
+  { week:15, day:4, start:'14:30', end:'17:40', name:'南区血液内科：白血病【第1组】', teacher:'叶华觅/曹九芳', room:'南区血液内科', type:'practice', subject:'内科学' },
+  { week:15, day:4, start:'14:30', end:'17:40', name:'南区风湿免疫科：类风湿关节炎、系统性红斑狼疮【第2组】', teacher:'赵平/古金华', room:'南区风湿免疫科', type:'practice', subject:'内科学' },
+  { week:16, day:4, start:'14:30', end:'17:40', name:'南区风湿免疫科：类风湿关节炎、系统性红斑狼疮【第1组】', teacher:'古金华/赵平', room:'南区风湿免疫科', type:'practice', subject:'内科学' },
+  { week:16, day:4, start:'14:30', end:'17:40', name:'南区血液内科：白血病【第2组】', teacher:'曹九芳/叶华觅', room:'南区血液内科', type:'practice', subject:'内科学' },
+
+  // ---------- 外科学 · 理论 ----------
+  { week:1,  day:1, start:'8:00',  end:'10:20', name:'甲状腺疾病', teacher:'郑轲', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:1,  day:5, start:'8:00',  end:'10:20', name:'乳房疾病', teacher:'郑轲', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:2,  day:1, start:'14:30', end:'16:50', name:'腹外疝', teacher:'罗坤', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:2,  day:5, start:'8:00',  end:'10:20', name:'腹部损伤（概论 · 常见内脏损伤）', teacher:'黄荣森', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:3,  day:1, start:'14:30', end:'16:50', name:'急性化脓性腹膜炎 · 腹腔脓肿', teacher:'黄荣森', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:3,  day:5, start:'8:00',  end:'10:20', name:'胃癌及其他胃肿瘤', teacher:'郑涛', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:3,  day:7, start:'14:30', end:'16:50', name:'胃十二指肠溃疡的外科治疗', teacher:'郑涛', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:4,  day:1, start:'14:30', end:'16:50', name:'小肠疾病 · 肠梗阻', teacher:'杨晓波', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:5,  day:1, start:'14:30', end:'16:50', name:'阑尾疾病', teacher:'杨晓波', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:6,  day:5, start:'8:00',  end:'10:20', name:'结、直肠与肛管疾病：结肠癌 · 直肠癌', teacher:'邓小东', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:6,  day:6, start:'8:00',  end:'10:20', name:'肛裂 · 肛周脓肿 · 肛瘘 · 痔', teacher:'邓兵', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:7,  day:1, start:'14:30', end:'16:50', name:'肝疾病', teacher:'余钰', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:7,  day:5, start:'8:00',  end:'10:20', name:'胆道疾病', teacher:'余钰', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:8,  day:1, start:'14:30', end:'16:50', name:'周围血管与淋巴疾病 · 中期学业指导', teacher:'龚光', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:8,  day:5, start:'8:00',  end:'10:20', name:'颅内压增高和脑疝', teacher:'徐小平', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:9,  day:1, start:'14:30', end:'16:50', name:'颅脑损伤', teacher:'邓青山', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:9,  day:5, start:'8:00',  end:'10:20', name:'胸部损伤', teacher:'文兵', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:10, day:1, start:'14:30', end:'16:50', name:'肺疾病：肺肿瘤 · 食管疾病：食管癌', teacher:'文兵', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:10, day:5, start:'8:00',  end:'10:20', name:'泌尿、男性生殖系统疾病总论', teacher:'陈孝彬', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:11, day:1, start:'14:30', end:'16:50', name:'泌尿系统损伤', teacher:'陈孝彬', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:11, day:5, start:'8:00',  end:'10:20', name:'泌尿、男性生殖系统感染', teacher:'周建', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:12, day:1, start:'14:30', end:'16:50', name:'前列腺增生 · 尿路结石', teacher:'江永浩', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:12, day:5, start:'8:00',  end:'10:20', name:'泌尿、男性生殖系统肿瘤（肾/膀胱/前列腺）', teacher:'马强', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:13, day:1, start:'14:30', end:'16:50', name:'骨折概论', teacher:'宋玉光', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:13, day:5, start:'8:00',  end:'10:20', name:'上肢骨、关节损伤', teacher:'刘光大', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:14, day:1, start:'14:30', end:'16:50', name:'下肢骨、关节损伤', teacher:'许鹏', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:14, day:5, start:'8:00',  end:'10:20', name:'骨盆、髋臼骨折 · 脊柱、脊髓损伤', teacher:'彭立鹏', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:15, day:1, start:'8:00',  end:'10:20', name:'颈、腰椎退行性疾病（颈椎病 · 腰椎间盘突出症）', teacher:'韩玉健', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:15, day:5, start:'8:00',  end:'10:20', name:'骨与关节化脓性感染 · 骨与关节结核', teacher:'樊志强', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  { week:16, day:1, start:'8:00',  end:'10:20', name:'骨肿瘤（总论/良性/骨巨细胞瘤/原发性恶性）· 期末反馈', teacher:'宋润来', room:'彭炳楼1A413', type:'theory', subject:'外科学' },
+  // ---------- 外科学 · 见习 ----------
+  { week:3,  day:2, start:'14:30', end:'17:40', name:'乳腺甲状腺外科：颈部疾病、乳房疾病【第2组】', teacher:'吕红英/凌浩淞', room:'乳腺甲状腺外科', type:'practice', subject:'外科学' },
+  { week:4,  day:2, start:'14:30', end:'17:40', name:'乳腺甲状腺外科：颈部疾病、乳房疾病【第1组】', teacher:'凌浩淞/吕红英', room:'乳腺甲状腺外科', type:'practice', subject:'外科学' },
+  { week:5,  day:2, start:'14:30', end:'17:40', name:'胃肠疝外科：腹外疝、腹部损伤、胃十二指肠疾病、胃癌【第2组】', teacher:'张敬麟/彭孟寅', room:'胃肠疝外科', type:'practice', subject:'外科学' },
+  { week:7,  day:2, start:'14:30', end:'17:40', name:'胃肠疝外科：腹外疝、腹部损伤、胃十二指肠疾病、胃癌【第1组】', teacher:'彭孟寅/张敬麟', room:'胃肠疝外科', type:'practice', subject:'外科学' },
+  { week:8,  day:2, start:'14:30', end:'17:40', name:'胃肠疝外科：小肠疾病、阑尾疾病、结直肠肛管疾病【第2组】', teacher:'袁远洪/杨媛', room:'胃肠疝外科', type:'practice', subject:'外科学' },
+  { week:9,  day:2, start:'14:30', end:'17:40', name:'胃肠疝外科：小肠疾病、阑尾疾病、结直肠肛管疾病【第1组】', teacher:'杨媛/袁远洪', room:'胃肠疝外科', type:'practice', subject:'外科学' },
+  { week:10, day:2, start:'14:30', end:'17:40', name:'血管外科：周围血管和淋巴管疾病【第2组】', teacher:'郑冬/刘盛智', room:'血管外科', type:'practice', subject:'外科学' },
+  { week:10, day:3, start:'14:30', end:'17:40', name:'神经外科：颅脑损伤【第2组】', teacher:'周开/张渊', room:'神经外科', type:'practice', subject:'外科学' },
+  { week:11, day:2, start:'14:30', end:'17:40', name:'血管外科：周围血管和淋巴管疾病【第1组】', teacher:'刘盛智/郑冬', room:'血管外科', type:'practice', subject:'外科学' },
+  { week:11, day:3, start:'14:30', end:'17:40', name:'神经外科：颅脑损伤【第1组】', teacher:'张渊/周开', room:'神经外科', type:'practice', subject:'外科学' },
+  { week:12, day:2, start:'14:30', end:'17:40', name:'肝胆胰外科：肝疾病【第2组】', teacher:'余钰/崔潇', room:'肝胆胰外科', type:'practice', subject:'外科学' },
+  { week:12, day:3, start:'14:30', end:'17:40', name:'胸心外科：胸部损伤、肺疾病、食管疾病【第2组】', teacher:'牟淋泉/刘金鑫', room:'胸心外科', type:'practice', subject:'外科学' },
+  { week:13, day:2, start:'14:30', end:'17:40', name:'肝胆胰外科：肝疾病【第1组】', teacher:'崔潇/余钰', room:'肝胆胰外科', type:'practice', subject:'外科学' },
+  { week:13, day:3, start:'14:30', end:'17:40', name:'胸心外科：胸部损伤、肺疾病、食管疾病【第1组】', teacher:'刘金鑫/牟淋泉', room:'胸心外科', type:'practice', subject:'外科学' },
+  { week:14, day:2, start:'14:30', end:'17:40', name:'肝胆胰外科：胆道疾病【第2组】', teacher:'张翼/余钰', room:'肝胆胰外科', type:'practice', subject:'外科学' },
+  { week:14, day:3, start:'14:30', end:'17:40', name:'手足显微外科：上肢、下肢骨关节损伤【第1组】', teacher:'董洪先/夏波', room:'手足显微外科', type:'practice', subject:'外科学' },
+  { week:14, day:3, start:'14:30', end:'17:40', name:'泌尿外科：泌尿系统损伤、泌尿系统结石【第2组】', teacher:'钟蛟/陈文强', room:'泌尿外科', type:'practice', subject:'外科学' },
+  { week:15, day:2, start:'14:30', end:'17:40', name:'肝胆胰外科：胆道疾病【第1组】', teacher:'余钰/张翼', room:'肝胆胰外科', type:'practice', subject:'外科学' },
+  { week:15, day:3, start:'14:30', end:'17:40', name:'泌尿外科：泌尿系统损伤、泌尿系统结石【第1组】', teacher:'陈文强/钟蛟', room:'泌尿外科', type:'practice', subject:'外科学' },
+  { week:15, day:3, start:'14:30', end:'17:40', name:'手足显微外科：上肢、下肢骨关节损伤【第2组】', teacher:'夏波/董洪先', room:'手足显微外科', type:'practice', subject:'外科学' },
+  { week:16, day:2, start:'14:30', end:'17:40', name:'骨科中心：脊柱脊髓损伤、骨盆骨折、颈腰椎退行性疾病【第1组】', teacher:'彭立鹏/雷正亮', room:'骨科中心', type:'practice', subject:'外科学' },
+  { week:16, day:3, start:'14:30', end:'17:40', name:'骨科中心：骨与关节化脓性感染、骨肿瘤【第1组】', teacher:'罗长奇/罗洪胜', room:'骨科中心', type:'practice', subject:'外科学' },
+  { week:16, day:3, start:'14:30', end:'17:40', name:'泌尿外科：良性前列腺增生、泌尿男生殖系统肿瘤【第2组】', teacher:'车兴奎/白盛江', room:'泌尿外科', type:'practice', subject:'外科学' },
+  { week:17, day:2, start:'14:30', end:'17:40', name:'骨科中心：脊柱脊髓损伤、骨盆骨折、颈腰椎退行性疾病【第2组】', teacher:'雷正亮/彭立鹏', room:'骨科中心', type:'practice', subject:'外科学' },
+  { week:17, day:3, start:'14:30', end:'17:40', name:'泌尿外科：良性前列腺增生、泌尿男生殖系统肿瘤【第1组】', teacher:'白盛江/车兴奎', room:'泌尿外科', type:'practice', subject:'外科学' },
+  { week:17, day:3, start:'14:30', end:'17:40', name:'骨科中心：骨与关节化脓性感染、骨肿瘤【第2组】', teacher:'罗洪胜/罗长奇', room:'骨科中心', type:'practice', subject:'外科学' },
+  { week:17, day:4, start:'14:30', end:'16:00', name:'见习总结【第1、2组】', teacher:'余钰', room:'彭炳楼1A413', type:'practice', subject:'外科学' },
+
+  // ---------- 传染病学 · 理论 ----------
+  { week:1,  day:4, start:'14:30', end:'16:50', name:'传染病学总论（思政）', teacher:'李文全', room:'彭炳楼1A413', type:'theory', subject:'传染病学' },
+  { week:2,  day:4, start:'14:30', end:'16:50', name:'病毒性肝炎(1)（思政）', teacher:'邱邦东', room:'彭炳楼1A413', type:'theory', subject:'传染病学' },
+  { week:3,  day:4, start:'14:30', end:'16:50', name:'病毒性肝炎(2)', teacher:'邱邦东', room:'彭炳楼1A413', type:'theory', subject:'传染病学' },
+  { week:4,  day:4, start:'14:30', end:'16:50', name:'流行性感冒 + 肾综合征出血热', teacher:'陈超', room:'彭炳楼1A413', type:'theory', subject:'传染病学' },
+  { week:6,  day:4, start:'14:30', end:'16:50', name:'艾滋病(1)（思政）', teacher:'聂双全', room:'彭炳楼1A413', type:'theory', subject:'传染病学' },
+  { week:7,  day:4, start:'14:30', end:'16:50', name:'艾滋病(2) + 中期学业指导', teacher:'聂双全', room:'彭炳楼1A413', type:'theory', subject:'传染病学' },
+  { week:8,  day:4, start:'14:30', end:'16:50', name:'流行性乙型脑炎 + 细菌性痢疾', teacher:'李廷东', room:'彭炳楼1A413', type:'theory', subject:'传染病学' },
+  { week:9,  day:4, start:'14:30', end:'16:50', name:'流行性脑脊髓膜炎 + 钩体病(1)', teacher:'陈兆桃', room:'彭炳楼1A413', type:'theory', subject:'传染病学' },
+  { week:10, day:4, start:'14:30', end:'16:50', name:'疟疾 + 期末考试反馈', teacher:'陈超', room:'彭炳楼1A413', type:'theory', subject:'传染病学' },
+  // ---------- 传染病学 · 见习 ----------
+  { week:6,  day:5, start:'14:30', end:'16:50', name:'见习：病毒性肝炎【第2组】', teacher:'车梦/李旭', room:'感染性疾病中心', type:'practice', subject:'传染病学' },
+  { week:7,  day:5, start:'14:30', end:'16:50', name:'见习：病毒性肝炎【第1组】', teacher:'李旭/车梦', room:'感染性疾病中心', type:'practice', subject:'传染病学' },
+  { week:8,  day:5, start:'14:30', end:'16:50', name:'见习：艾滋病【第2组】', teacher:'吴家亮/刘娟', room:'感染性疾病中心', type:'practice', subject:'传染病学' },
+  { week:9,  day:5, start:'14:30', end:'16:50', name:'见习：艾滋病【第1组】', teacher:'刘娟/吴家亮', room:'感染性疾病中心', type:'practice', subject:'传染病学' },
+  { week:10, day:5, start:'14:30', end:'16:50', name:'病案讨论：病毒性肝炎、艾滋病', teacher:'车梦/吴家亮', room:'彭炳楼1A413', type:'practice', subject:'传染病学' },
+
+  // ---------- 医学PBL ----------
+  { week:2,  day:5, start:'14:30', end:'16:50', name:'【第1组】案例2：第一幕', teacher:'朱磊', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:3,  day:2, start:'8:00',  end:'10:20', name:'【第1组】案例2：第二幕', teacher:'朱磊', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:4,  day:2, start:'8:00',  end:'10:20', name:'【第1组】案例2：第三幕、中期学业指导', teacher:'朱磊', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:5,  day:2, start:'8:00',  end:'10:20', name:'【第2组】案例2：第一幕', teacher:'朱磊', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:7,  day:2, start:'8:00',  end:'10:20', name:'【第2组】案例2：第二幕', teacher:'朱磊', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:8,  day:2, start:'8:00',  end:'10:20', name:'【第2组】案例2：第三幕、中期学业指导', teacher:'朱磊', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:9,  day:2, start:'8:00',  end:'10:20', name:'【第1组】案例1：第一幕', teacher:'余钰', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:10, day:2, start:'8:00',  end:'10:20', name:'【第1组】案例1：第二幕', teacher:'余钰', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:11, day:2, start:'8:00',  end:'10:20', name:'【第1组】案例1：第三幕、期末反馈', teacher:'余钰', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:12, day:2, start:'8:00',  end:'10:20', name:'【第2组】案例1：第一幕', teacher:'余钰', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:13, day:2, start:'8:00',  end:'10:20', name:'【第2组】案例1：第二幕', teacher:'余钰', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+  { week:14, day:2, start:'8:00',  end:'10:20', name:'【第2组】案例1：第三幕、期末反馈', teacher:'余钰', room:'彭炳楼1A413', type:'theory', subject:'医学PBL' },
+
+  // ---------- 皮肤性病学 · 理论 ----------
+  { week:1,  day:3, start:'8:00',  end:'10:20', name:'皮肤的结构 · 皮肤性病的临床表现', teacher:'张蕾', room:'彭炳楼1A413', type:'theory', subject:'皮肤性病学' },
+  { week:2,  day:3, start:'8:00',  end:'10:20', name:'皮肤性病的治疗 · 病毒性皮肤病', teacher:'张蕾', room:'彭炳楼1A413', type:'theory', subject:'皮肤性病学' },
+  { week:3,  day:3, start:'8:00',  end:'10:20', name:'细菌性皮肤病 · 真菌性皮肤病', teacher:'邓英键', room:'彭炳楼1A413', type:'theory', subject:'皮肤性病学' },
+  { week:4,  day:3, start:'8:00',  end:'10:20', name:'接触性皮炎 · 湿疹 · 荨麻疹', teacher:'杨如学', room:'彭炳楼1A413', type:'theory', subject:'皮肤性病学' },
+  { week:5,  day:3, start:'8:00',  end:'10:20', name:'药疹 · 银屑病', teacher:'杨如学', room:'彭炳楼1A413', type:'theory', subject:'皮肤性病学' },
+  { week:7,  day:3, start:'8:00',  end:'10:20', name:'性传播疾病概述 · 梅毒 · 淋病', teacher:'邓英键', room:'彭炳楼1A413', type:'theory', subject:'皮肤性病学' },
+  // ---------- 皮肤性病学 · 见习 ----------
+  { week:8,  day:3, start:'8:50',  end:'11:10', name:'见习：实验室检查技术、皮损读片【第2组】', teacher:'何永萍/蒲玉平', room:'北大街院区皮肤科', type:'practice', subject:'皮肤性病学' },
+  { week:9,  day:3, start:'8:50',  end:'11:10', name:'见习：实验室检查技术、皮损读片【第1组】', teacher:'蒲玉平/何永萍', room:'北大街院区皮肤科', type:'practice', subject:'皮肤性病学' },
+  { week:10, day:3, start:'8:50',  end:'11:10', name:'见习：临床病例观摩、皮损识别【第2组】', teacher:'何永萍/蒲玉平', room:'北大街院区皮肤科', type:'practice', subject:'皮肤性病学' },
+  { week:11, day:3, start:'8:50',  end:'11:10', name:'见习：临床病例观摩、皮损识别【第1组】', teacher:'蒲玉平/何永萍', room:'北大街院区皮肤科', type:'practice', subject:'皮肤性病学' },
+  { week:12, day:3, start:'8:00',  end:'10:20', name:'病案分析及讨论【第1、2组】', teacher:'何永萍/蒲玉平', room:'彭炳楼1A413', type:'practice', subject:'皮肤性病学' },
+
+  // ---------- 耳鼻咽喉头颈外科学 · 理论 ----------
+  { week:1,  day:3, start:'14:30', end:'16:50', name:'耳鼻喉科头颈外科学绪论 · 鼻科学解剖生理 · 鼻外伤', teacher:'陈兵', room:'彭炳楼1A413', type:'theory', subject:'耳鼻咽喉头颈外科学' },
+  { week:2,  day:3, start:'14:30', end:'16:50', name:'慢性鼻窦炎 · 咽科学 · 扁桃体炎', teacher:'彭琳', room:'彭炳楼1A413', type:'theory', subject:'耳鼻咽喉头颈外科学' },
+  { week:3,  day:3, start:'14:30', end:'16:50', name:'喉肿瘤 · 喉阻塞 · 颈科学', teacher:'孙晓强', room:'彭炳楼1A413', type:'theory', subject:'耳鼻咽喉头颈外科学' },
+  { week:4,  day:3, start:'14:30', end:'16:50', name:'中期学业指导 · 咽科学 · 喉科学', teacher:'杜聃', room:'彭炳楼1A413', type:'theory', subject:'耳鼻咽喉头颈外科学' },
+  { week:5,  day:3, start:'14:30', end:'16:50', name:'气管食管科学 · 耳科学应用解剖及生理', teacher:'李其银', room:'彭炳楼1A413', type:'theory', subject:'耳鼻咽喉头颈外科学' },
+  { week:7,  day:3, start:'14:30', end:'16:50', name:'期末考试反馈 · 中耳炎性疾病 · 耳聋及防治', teacher:'周浩', room:'彭炳楼1A413', type:'theory', subject:'耳鼻咽喉头颈外科学' },
+  // ---------- 耳鼻咽喉头颈外科学 · 见习 ----------
+  { week:8,  day:3, start:'14:30', end:'16:50', name:'第1组：常规检查及操作方法（耳部及鼻部）【实验】', teacher:'张小平/吴艾琳', room:'耳鼻咽喉科', type:'practice', subject:'耳鼻咽喉头颈外科学' },
+  { week:9,  day:3, start:'14:30', end:'16:50', name:'第2组：常规检查及操作方法（耳部及鼻部）【实验】', teacher:'吴艾琳/张小平', room:'耳鼻咽喉科', type:'practice', subject:'耳鼻咽喉头颈外科学' },
+  { week:10, day:3, start:'14:30', end:'16:50', name:'第1组：常规检查及操作方法（咽喉部及颈部）【实验】', teacher:'张小平/黄成', room:'耳鼻咽喉科', type:'practice', subject:'耳鼻咽喉头颈外科学' },
+  { week:11, day:3, start:'14:30', end:'16:50', name:'第2组：常规检查及操作方法（咽喉部及颈部）【实验】', teacher:'黄成/张小平', room:'耳鼻咽喉科', type:'practice', subject:'耳鼻咽喉头颈外科学' },
+  { week:12, day:3, start:'14:30', end:'16:50', name:'第1组：内镜（耳鼻咽喉内镜）检查方法【见习】', teacher:'张小平/张进', room:'耳鼻咽喉科', type:'practice', subject:'耳鼻咽喉头颈外科学' },
+  { week:13, day:3, start:'14:30', end:'16:50', name:'第2组：内镜（耳鼻咽喉内镜）检查方法【见习】', teacher:'张进/张小平', room:'耳鼻咽喉科', type:'practice', subject:'耳鼻咽喉头颈外科学' },
+];
+
+const TOTAL_WEEKS = 17;
+const DAY_NAMES = ['周一','周二','周三','周四','周五','周六','周日'];
+const START_HOUR = 8;
+const END_HOUR = 18;
+const HOUR_HEIGHT = 60; // px per hour
+// 学期第一周周一日期
+const SEMESTER_START = new Date('2026-08-31'); // 第1周周一
+let currentWeek = 1;
+
+function getWeekDates(weekNum) {
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(SEMESTER_START);
+    d.setDate(d.getDate() + (weekNum - 1) * 7 + i);
+    dates.push(d);
+  }
+  return dates;
+}
+function formatDate(d) {
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+function timeToMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// ===== 同时间课程并排布局：区间图着色 =====
+function layoutCourses(courses) {
+  const n = courses.length;
+  if (n === 0) return [];
+  const items = courses.map(c => ({ c, s: timeToMinutes(c.start), e: timeToMinutes(c.end) }));
+  // 重叠邻接
+  const adj = Array.from({ length: n }, () => []);
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      if (items[i].s < items[j].e && items[j].s < items[i].e) {
+        adj[i].push(j); adj[j].push(i);
+      }
+    }
+  }
+  // 连通分量
+  const comp = new Array(n).fill(-1);
+  let compCnt = 0;
+  for (let i = 0; i < n; i++) {
+    if (comp[i] === -1) {
+      const stack = [i]; comp[i] = compCnt;
+      while (stack.length) {
+        const u = stack.pop();
+        for (const v of adj[u]) if (comp[v] === -1) { comp[v] = compCnt; stack.push(v); }
+      }
+      compCnt++;
+    }
+  }
+  // 贪心染色（按开始时间排序）
+  const lane = new Array(n).fill(0);
+  const compLanes = new Array(compCnt).fill(0);
+  const order = items.map((it, i) => i)
+    .sort((a, b) => items[a].s - items[b].s || items[b].e - items[a].e);
+  for (const i of order) {
+    const used = new Set();
+    for (const v of adj[i]) if (comp[v] === comp[i]) used.add(lane[v]);
+    let l = 0;
+    while (used.has(l)) l++;
+    lane[i] = l;
+    compLanes[comp[i]] = Math.max(compLanes[comp[i]], l + 1);
+  }
+  return items.map((it, i) => ({
+    course: it.c, lane: lane[i], widthPct: 100 / compLanes[comp[i]]
+  }));
+}
+
+function renderWeekSelector() {
+  const container = document.getElementById('weekSelector');
+  const weeksWithClass = new Set(courses.map(c => c.week));
+  container.innerHTML = '';
+  for (let w = 1; w <= TOTAL_WEEKS; w++) {
+    const btn = document.createElement('button');
+    btn.className = 'week-btn' + (w === currentWeek ? ' active' : '') + (weeksWithClass.has(w) ? ' has-class' : '');
+    btn.textContent = w;
+    btn.onclick = () => { currentWeek = w; renderAll(); };
+    container.appendChild(btn);
+  }
+}
+
+function renderLegend() {
+  const legend = document.getElementById('legend');
+  let html = '';
+  for (const [name, s] of Object.entries(SUBJECTS)) {
+    html += `<div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,${s.main},${s.grad})"></div>${name}</div>`;
+  }
+  html += '<div class="legend-divider"></div>';
+  html += `<div class="legend-item"><div class="legend-dot practice" style="border-color:#999"></div>见习课</div>`;
+  html += `<div class="legend-note">（深色=理论课 / 教室课，浅色斜纹描边=见习课）</div>`;
+  legend.innerHTML = html;
+}
+
+function renderDateInfo() {
+  const dates = getWeekDates(currentWeek);
+  document.getElementById('dateInfo').textContent =
+    `第${currentWeek}周 · ${formatDate(dates[0])} - ${formatDate(dates[6])}`;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('scheduleGrid');
+  const dates = getWeekDates(currentWeek);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  let html = '';
+  // 表头：时间列 + 7天
+  html += '<div class="grid-header" style="border-bottom:2px solid #1a73e8">时间</div>';
+  for (let i = 0; i < 7; i++) {
+    const isToday = dates[i].getTime() === today.getTime();
+    html += `<div class="grid-header${isToday ? ' today' : ''}">${DAY_NAMES[i]}<div class="date">${formatDate(dates[i])}</div></div>`;
+  }
+  // 时间列
+  html += '<div class="time-col">';
+  for (let h = START_HOUR; h < END_HOUR; h++) {
+    html += `<div class="time-slot">${h}:00<br>${h+1}:00</div>`;
+  }
+  html += '</div>';
+  // 每天的列
+  const weekCourses = courses.filter(c => c.week === currentWeek);
+  let anyCourse = false;
+  for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+    const dayNum = dayIdx + 1; // 1=周一 ... 7=周日
+    const dayCourses = weekCourses.filter(c => c.day === dayNum);
+    if (dayCourses.length) anyCourse = true;
+    const laidOut = layoutCourses(dayCourses);
+    html += '<div class="day-col">';
+    // 背景格子
+    for (let h = START_HOUR; h < END_HOUR; h++) {
+      html += '<div class="day-cell"></div>';
+    }
+    // 课程卡片
+    laidOut.forEach(({ course: c, lane, widthPct }) => {
+      const s = SUBJECTS[c.subject];
+      const startMin = timeToMinutes(c.start);
+      const endMin = timeToMinutes(c.end);
+      const top = ((startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+      const height = ((endMin - startMin) / 60) * HOUR_HEIGHT - 4;
+      const left = lane * widthPct;
+      const isNarrow = widthPct < 100;
+      let style;
+      if (c.type === 'practice') {
+        style = `background:${s.light}; color:${s.text}; border-color:${s.main}; top:${top}px; height:${height}px; left:${left}%; width:calc(${widthPct}% - 6px);`;
+      } else {
+        style = `background:linear-gradient(135deg, ${s.main}, ${s.grad}); top:${top}px; height:${height}px; left:${left}%; width:calc(${widthPct}% - 6px);`;
+      }
+      const badge = c.type === 'practice' ? '见习' : '理论';
+      html += `
+        <div class="course-card ${c.type}${isNarrow ? ' narrow' : ''}" style="${style}"
+             title="${c.subject} · ${c.name}\n教师：${c.teacher}\n教室：${c.room}\n时间：${c.start}-${c.end}\n类型：${badge}">
+          <div class="badge">${badge}</div>
+          <div class="course-name">${c.name}</div>
+          <div class="course-meta">教师 ${c.teacher}<br>教室 ${c.room}<br>时间 ${c.start}-${c.end}</div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+  if (!anyCourse) {
+    html = `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">📅</div>第${currentWeek}周暂无排课</div>`;
+  }
+  grid.innerHTML = html;
+}
+function renderAll() {
+  renderWeekSelector();
+  renderDateInfo();
+  renderLegend();
+  renderGrid();
+}
+renderAll();
+</script>
+</body>
+</html>

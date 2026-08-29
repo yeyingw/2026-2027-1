@@ -722,10 +722,10 @@
       // ---- 行高策略 ----
       // 默认行高 55px，特定时段缩小到 30px
       const DEFAULT_ROW_HEIGHT = 55;
-      const COMPACT_ROW_HEIGHT = 30;
+      const COMPACT_ROW_HEIGHT = 25;
 
       // 哪些小时需要压缩（整点）
-      const COMPACT_HOURS = new Set([11, 12, 18]);
+      const COMPACT_HOURS = new Set([11, 12, 13, 18]);
 
       function getHourHeight(hour) {
         return COMPACT_HOURS.has(hour)

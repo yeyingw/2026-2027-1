@@ -1,8 +1,8 @@
 <!--
 作者：雲
-功能：调整手机端“科目”栏上下间距 + 左侧时间栏固定 + 字体/行列间距优化
-—— 进一步加大卡片内字体（科目、时间、老师）
-修改时间：2026年8月28日 
+功能：将科目选择改成可折叠，默认折叠状态；
+缩短11:00-13:00之间的行间距
+修改时间：2026年8月29日 
 -->
 
 <!doctype html>
@@ -116,11 +116,30 @@
         flex-wrap: wrap;
         border-bottom: 1px solid #e8e8e8;
         font-size: 13px;
+        position: relative;
       }
       .filter-label {
         font-weight: 500;
         color: #555;
         white-space: nowrap;
+      }
+      /* ---- 科目筛选容器 (可折叠) ---- */
+      .subject-filter-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px 10px;
+        flex-wrap: wrap;
+        flex: 1 1 auto;
+      }
+      .subject-filter-wrap .filter-label {
+        flex-shrink: 0;
+      }
+      .subject-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 6px;
+        align-items: center;
+        transition: all 0.25s ease;
       }
       .filter-chip {
         padding: 4px 12px;
@@ -131,6 +150,7 @@
         transition: all 0.2s;
         user-select: none;
         margin: 2px 0;
+        font-size: 13px;
       }
       .filter-chip:hover {
         opacity: 0.8;
@@ -147,12 +167,40 @@
         margin-right: 5px;
         vertical-align: middle;
       }
+
+      /* ---- 折叠切换按钮 (手机) ---- */
+      .subject-toggle-btn {
+        display: none;
+        background: #f0f2f5;
+        border: 1px solid #d9d9d9;
+        border-radius: 14px;
+        padding: 2px 14px 2px 10px;
+        font-size: 13px;
+        cursor: pointer;
+        color: #333;
+        font-weight: 500;
+        line-height: 30px;
+        white-space: nowrap;
+        align-items: center;
+        gap: 4px;
+        user-select: none;
+      }
+      .subject-toggle-btn .arrow {
+        transition: transform 0.25s;
+        display: inline-block;
+        font-size: 12px;
+      }
+      .subject-toggle-btn .arrow.open {
+        transform: rotate(180deg);
+      }
+
       .group-filter {
-        margin-left: auto;
         display: flex;
         gap: 8px;
         align-items: center;
         flex-wrap: wrap;
+        flex-shrink: 0;
+        margin-left: auto;
       }
       .group-btn {
         padding: 4px 12px;
@@ -198,11 +246,14 @@
         border-top: none;
         position: relative;
       }
+      /* grid 容器：行高由 JS 通过 grid-template-rows 动态控制 */
       .schedule-grid {
         display: grid;
         grid-template-columns: 60px repeat(7, minmax(160px, 1fr));
         min-width: 100%;
         width: max-content;
+        /* grid-auto-rows 由 JS 动态设置，这里只作为后备 */
+        grid-auto-rows: 55px;
       }
       .grid-header {
         background: #f5f7fa;
@@ -235,13 +286,13 @@
       }
 
       .time-slot {
-        height: 60px;
         padding: 4px 4px;
         font-size: 10px;
         color: #888;
         text-align: right;
         border-bottom: 1px solid #f0f0f0;
         line-height: 1.3;
+        /* 高度由 JS 内联 style 控制 */
       }
       .day-col {
         border-right: 1px solid #e8e8e8;
@@ -253,8 +304,8 @@
         border-right: none;
       }
       .day-cell {
-        height: 60px;
         border-bottom: 1px solid #f0f0f0;
+        /* 高度由 JS 内联 style 控制 */
       }
 
       /* 课程卡片 */
@@ -389,7 +440,7 @@
         text-align: center;
         padding: 16px;
         color: #999;
-        font-size: 11px;
+        font-size: 20px;
       }
       .stats {
         background: white;
@@ -399,7 +450,7 @@
         border-top: 1px solid #eee;
       }
 
-      /* ---- 手机优化（核心调整） ---- */
+      /* ---- 手机优化 ---- */
       @media (max-width: 768px) {
         body {
           padding: 10px;
@@ -417,6 +468,7 @@
         .filter-bar {
           padding: 8px 16px;
           gap: 6px 10px;
+          flex-wrap: wrap;
         }
         .filter-chip {
           padding: 3px 10px;
@@ -425,8 +477,9 @@
         }
         .legend {
           padding: 8px 16px;
+          font-size: 11px;
+          gap: 10px;
         }
-        /* 调整网格列宽：左侧时间列加宽，每日列宽增加 */
         .schedule-grid {
           grid-template-columns: 55px repeat(7, minmax(150px, 1fr));
         }
@@ -437,29 +490,28 @@
         .grid-header .date {
           font-size: 10px;
         }
-        /* 行高从50px增加到55px */
         .time-slot {
           font-size: 11px;
-          height: 55px;
+          /* 高度由 JS 控制 */
         }
         .day-cell {
-          height: 55px;
+          /* 高度由 JS 控制 */
         }
-        /* ===== 卡片字体加大 ===== */
+
         .course-card {
-          font-size: 14px; /* 整体基准 */
+          font-size: 14px;
           padding: 6px 7px;
         }
         .course-card .subject-tag {
-          font-size: 11px; /* 科目名称 */
+          font-size: 11px;
           margin-bottom: 3px;
         }
         .course-card .course-name {
-          font-size: 14px; /* 课程名称 */
+          font-size: 14px;
           margin-bottom: 3px;
         }
         .course-card .course-meta {
-          font-size: 12px; /* 时间、老师 */
+          font-size: 13px;
           line-height: 1.4;
         }
         .course-card .group-tag {
@@ -468,7 +520,7 @@
         }
         .day-col {
           min-width: 130px;
-          min-height: 660px; /* 适应新行高：55*12 = 660 */
+          min-height: 660px;
         }
         .modal-box {
           max-width: 95%;
@@ -487,6 +539,45 @@
         }
         .time-col {
           box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ---- 手机端：折叠科目筛选 ---- */
+        .subject-toggle-btn {
+          display: inline-flex;
+        }
+        .subject-filter-wrap .filter-label {
+          display: none;
+        }
+        .subject-chips {
+          display: none;
+          width: 100%;
+          padding-top: 6px;
+          border-top: 1px solid #eee;
+          margin-top: 4px;
+        }
+        .subject-chips.open {
+          display: flex;
+        }
+        .filter-bar {
+          flex-wrap: wrap;
+        }
+        .subject-filter-wrap {
+          flex: 1 1 100%;
+          flex-wrap: wrap;
+        }
+        .subject-filter-wrap .filter-label {
+          display: none;
+        }
+        .group-filter {
+          margin-left: 0;
+          width: 100%;
+          justify-content: flex-start;
+          border-top: 1px solid #f0f0f0;
+          padding-top: 6px;
+          margin-top: 2px;
+        }
+        .group-filter .filter-label {
+          display: inline;
         }
       }
 
@@ -559,16 +650,16 @@
       </div>
 
       <div class="filter-bar">
-        <span class="filter-label">科目：</span>
-        <div
-          id="subjectFilters"
-          style="
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px 6px;
-            align-items: center;
-          "
-        ></div>
+        <!-- 科目筛选（手机可折叠） -->
+        <div class="subject-filter-wrap" id="subjectFilterWrap">
+          <span class="filter-label">科目：</span>
+          <button class="subject-toggle-btn" id="subjectToggleBtn">
+            科目 <span class="arrow" id="subjectArrow">▼</span>
+          </button>
+          <div class="subject-chips" id="subjectChips"></div>
+        </div>
+
+        <!-- 组别筛选（始终显示） -->
         <div class="group-filter">
           <span class="filter-label">组别：</span>
           <button
@@ -594,7 +685,6 @@
       </div>
 
       <div class="stats" id="stats"></div>
-
       <div class="footer">点击课程卡片查看详情 · 手机左右滑动查看每日课程</div>
     </div>
 
@@ -608,7 +698,9 @@
     </div>
 
     <script>
-      // ----- 科目颜色映射 -----
+      // ============================================================
+      //  1. 配置：科目颜色 & 行高策略
+      // ============================================================
       const subjectColors = {
         外科学: "#8e24aa",
         内科学: "#e53935",
@@ -627,7 +719,40 @@
         PBL: "医学PBL",
       };
 
-      // ----- 原始CSV数据 -----
+      // ---- 行高策略 ----
+      // 默认行高 55px，特定时段缩小到 30px
+      const DEFAULT_ROW_HEIGHT = 55;
+      const COMPACT_ROW_HEIGHT = 30;
+
+      // 哪些小时需要压缩（整点）
+      const COMPACT_HOURS = new Set([11, 12, 18]);
+
+      function getHourHeight(hour) {
+        return COMPACT_HOURS.has(hour)
+          ? COMPACT_ROW_HEIGHT
+          : DEFAULT_ROW_HEIGHT;
+      }
+
+      // 计算从 START_HOUR*60 到指定分钟数的累计高度
+      function getCumulativeHeight(minutes) {
+        const startMin = START_HOUR * 60;
+        if (minutes <= startMin) return 0;
+        let total = 0;
+        let current = startMin;
+        while (current < minutes) {
+          const hour = Math.floor(current / 60);
+          const nextHour = (hour + 1) * 60;
+          const segment = Math.min(minutes, nextHour) - current;
+          const height = getHourHeight(hour);
+          total += (segment / 60) * height;
+          current = nextHour;
+        }
+        return total;
+      }
+
+      // ============================================================
+      //  2. 原始 CSV 数据
+      // ============================================================
       const csvText = `周次,星期,开始时间,结束时间,课程名称,教师,教室,类型,学科分类
 1,1,8:00,10:20,颈部疾病（甲状腺疾病）,郑轲,彭炳楼A区4楼1A404,理论,外科
 1,5,8:00,10:20,乳房疾病,郑轲,彭炳楼A区4楼1A404,理论,外科
@@ -791,7 +916,9 @@
 9,5,14:30,16:50,"【第1组】见习：艾滋病",刘娟/吴家亮,感染性疾病中心,见习,传染见习
 10,5,14:30,16:50,病案讨论（病毒性肝炎、艾滋病）第1、2组,车梦/吴家亮,彭炳楼A区4楼1A404,见习,传染见习`;
 
-      // ----- 解析CSV -----
+      // ============================================================
+      //  3. 解析 CSV
+      // ============================================================
       function parseCSV(text) {
         const lines = text.split("\n").filter((line) => line.trim() !== "");
         const result = [];
@@ -853,7 +980,9 @@
 
       const courses = parseCSV(csvText);
 
-      // ----- 渲染逻辑 -----
+      // ============================================================
+      //  4. 全局状态 & 工具
+      // ============================================================
       const TOTAL_WEEKS = 17;
       const DAY_NAMES = [
         "周一",
@@ -866,13 +995,14 @@
       ];
       const START_HOUR = 8;
       const END_HOUR = 20;
-      // 行高改为55px，与手机端CSS一致（电脑端也统一使用55，更舒适）
-      const HOUR_HEIGHT = 55;
       const SEMESTER_START = new Date("2026-08-31");
 
       let currentWeek = 1;
       let hiddenSubjects = new Set();
       let currentGroup = "all";
+
+      // 手机端折叠状态
+      let subjectChipsOpen = false;
 
       function getWeekDates(weekNum) {
         const dates = [];
@@ -883,15 +1013,22 @@
         }
         return dates;
       }
+
       function formatDate(d) {
         return `${d.getMonth() + 1}/${d.getDate()}`;
       }
+
       function timeToMinutes(t) {
         if (!t) return 0;
         const [h, m] = t.split(":").map(Number);
         return h * 60 + (m || 0);
       }
 
+      // ============================================================
+      //  5. 渲染函数
+      // ============================================================
+
+      // 5.1 周选择器
       function renderWeekSelector() {
         const container = document.getElementById("weekSelector");
         const weeksWithClass = new Set(courses.map((c) => c.week));
@@ -917,8 +1054,9 @@
           `第${currentWeek}周 · ${formatDate(dates[0])} - ${formatDate(dates[6])}`;
       }
 
+      // 5.2 科目筛选 (chip)
       function renderSubjectFilters() {
-        const container = document.getElementById("subjectFilters");
+        const container = document.getElementById("subjectChips");
         const subjects = [...new Set(courses.map((c) => c.subject))];
         container.innerHTML = "";
         subjects.forEach((s) => {
@@ -929,12 +1067,45 @@
           chip.onclick = () => {
             if (hiddenSubjects.has(s)) hiddenSubjects.delete(s);
             else hiddenSubjects.add(s);
+            // 如果折叠状态，保持折叠
             renderAll();
           };
           container.appendChild(chip);
         });
+
+        // 同步折叠状态
+        updateSubjectChipsVisibility();
       }
 
+      // 5.3 折叠控制
+      function updateSubjectChipsVisibility() {
+        const chips = document.getElementById("subjectChips");
+        const arrow = document.getElementById("subjectArrow");
+        if (window.innerWidth <= 768) {
+          if (subjectChipsOpen) {
+            chips.classList.add("open");
+            arrow.classList.add("open");
+            arrow.textContent = "▲";
+          } else {
+            chips.classList.remove("open");
+            arrow.classList.remove("open");
+            arrow.textContent = "▼";
+          }
+        } else {
+          // 大屏始终展开
+          chips.classList.add("open");
+          arrow.classList.add("open");
+          arrow.textContent = "▲";
+        }
+      }
+
+      // 切换折叠
+      function toggleSubjectChips() {
+        subjectChipsOpen = !subjectChipsOpen;
+        updateSubjectChipsVisibility();
+      }
+
+      // 5.4 图例
       function renderLegend() {
         const container = document.getElementById("legend");
         const subjects = [...new Set(courses.map((c) => c.subject))];
@@ -946,6 +1117,7 @@
         container.innerHTML = html;
       }
 
+      // 5.5 组别切换
       function setGroup(g) {
         currentGroup = g;
         document.querySelectorAll(".group-btn").forEach((b) => {
@@ -967,36 +1139,57 @@
         });
       }
 
-      // ----- 渲染课表（水平并排 + 点击事件）-----
+      // ============================================================
+      //  6. 核心渲染：课表 (动态行高)
+      // ============================================================
       function renderGrid() {
         const grid = document.getElementById("scheduleGrid");
         const dates = getWeekDates(currentWeek);
         const filtered = getFilteredCourses();
         const weekCourses = filtered.filter((c) => c.week === currentWeek);
 
+        // ---- 6a. 计算每一行的高度 (从 START_HOUR 到 END_HOUR) ----
+        const rowHeights = [];
+        let totalHeight = 0;
+        for (let h = START_HOUR; h < END_HOUR; h++) {
+          const hh = getHourHeight(h);
+          rowHeights.push(hh);
+          totalHeight += hh;
+        }
+
+        // 构建 grid-template-rows
+        const rowsStr = rowHeights.map((h) => h + "px").join(" ");
+        grid.style.gridTemplateRows = rowsStr;
+
+        // ---- 6b. 生成表头 ----
         let html = "";
-        html +=
-          '<div class="grid-header" style="border-bottom:2px solid #1a237e">时间</div>';
+        html += `<div class="grid-header" style="border-bottom:2px solid #1a237e">时间</div>`;
         for (let i = 0; i < 7; i++) {
           html += `<div class="grid-header">${DAY_NAMES[i]}<div class="date">${formatDate(dates[i])}</div></div>`;
         }
 
-        // 时间列
+        // ---- 6c. 时间列 (每个 time-slot 高度动态) ----
         html += '<div class="time-col">';
         for (let h = START_HOUR; h < END_HOUR; h++) {
-          html += `<div class="time-slot">${h}:00</div>`;
+          const hh = getHourHeight(h);
+          html += `<div class="time-slot" style="height:${hh}px;">${h}:00</div>`;
         }
         html += "</div>";
 
+        // ---- 6d. 每天的内容列 ----
         for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
           const dayNum = dayIdx + 1;
           const dayCourses = weekCourses.filter((c) => c.day === dayNum);
           html += '<div class="day-col">';
+
+          // 空 day-cell (占位，高度动态)
           for (let h = START_HOUR; h < END_HOUR; h++) {
-            html += '<div class="day-cell"></div>';
+            const hh = getHourHeight(h);
+            html += `<div class="day-cell" style="height:${hh}px;"></div>`;
           }
 
-          // 按时间段分组
+          // ---- 6e. 课程卡片 (使用累加高度定位) ----
+          // 按时间段分组 (同时间多课程并排)
           const timeGroups = {};
           dayCourses.forEach((c) => {
             const key = `${c.start}|${c.end}`;
@@ -1015,11 +1208,11 @@
               const leftPct = marginPct + idx * (widthPct + gapPct);
               const startMin = timeToMinutes(c.start);
               const endMin = timeToMinutes(c.end);
-              const top = ((startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
-              const height = Math.max(
-                ((endMin - startMin) / 60) * HOUR_HEIGHT - 3,
-                30,
-              );
+
+              const top = getCumulativeHeight(startMin);
+              const bottom = getCumulativeHeight(endMin);
+              const height = Math.max(bottom - top - 2, 28);
+
               const color = subjectColors[c.subject] || "#666";
               const isPrac = c.type === "practice";
               const groupHtml = c.group
@@ -1028,21 +1221,21 @@
               const displayName = c.name.split("\n")[0];
 
               html += `
-          <div class="course-card ${isPrac ? "practice" : ""}" 
-               style="top:${top}px; height:${height}px; left:${leftPct}%; width:${widthPct}%; background:linear-gradient(135deg, ${color}, ${color}dd);"
-               data-subject="${c.subject}"
-               data-name="${c.full_name}"
-               data-teacher="${c.teacher}"
-               data-time="${c.start} - ${c.end}"
-               data-group="${c.group || "全班"}"
-               data-classroom="${c.classroom}"
-               onclick="showDetail(this)">
-            <div class="subject-tag">${c.subject}${isPrac ? " · 见习" : ""}</div>
-            <div class="course-name">${displayName}</div>
-            <div class="course-meta">👤 ${c.teacher}<br>⏰ ${c.start}-${c.end}</div>
-            ${groupHtml}
-          </div>
-        `;
+                    <div class="course-card ${isPrac ? "practice" : ""}" 
+                         style="top:${top}px; height:${height}px; left:${leftPct}%; width:${widthPct}%; background:linear-gradient(135deg, ${color}, ${color}dd);"
+                         data-subject="${c.subject}"
+                         data-name="${c.full_name}"
+                         data-teacher="${c.teacher}"
+                         data-time="${c.start} - ${c.end}"
+                         data-group="${c.group || "全班"}"
+                         data-classroom="${c.classroom}"
+                         onclick="showDetail(this)">
+                        <div class="subject-tag">${c.subject}${isPrac ? " · 见习" : ""}</div>
+                        <div class="course-name">${displayName}</div>
+                        <div class="course-meta">👤 ${c.teacher}<br>⏰ ${c.start}-${c.end}</div>
+                        ${groupHtml}
+                    </div>
+                    `;
             });
           });
 
@@ -1052,7 +1245,9 @@
         grid.innerHTML = html;
       }
 
-      // ----- 模态框显示详情 -----
+      // ============================================================
+      //  7. 模态框
+      // ============================================================
       function showDetail(el) {
         const subject = el.dataset.subject;
         const name = el.dataset.name;
@@ -1063,12 +1258,12 @@
 
         document.getElementById("modalTitle").textContent = name;
         document.getElementById("modalDetail").innerHTML = `
-    <div><span class="label">科目</span><span class="value">${subject}</span></div>
-    <div><span class="label">教师</span><span class="value">${teacher}</span></div>
-    <div><span class="label">时间</span><span class="value">${time}</span></div>
-    <div><span class="label">组别</span><span class="value">${group}</span></div>
-    <div><span class="label">教室</span><span class="value">${classroom}</span></div>
-  `;
+            <div><span class="label">科目</span><span class="value">${subject}</span></div>
+            <div><span class="label">教师</span><span class="value">${teacher}</span></div>
+            <div><span class="label">时间</span><span class="value">${time}</span></div>
+            <div><span class="label">组别</span><span class="value">${group}</span></div>
+            <div><span class="label">教室</span><span class="value">${classroom}</span></div>
+        `;
         document.getElementById("modalOverlay").classList.add("active");
       }
 
@@ -1085,6 +1280,9 @@
           }
         });
 
+      // ============================================================
+      //  8. 统计 & 全部渲染
+      // ============================================================
       function renderStats() {
         const filtered = getFilteredCourses();
         const weekCourses = filtered.filter((c) => c.week === currentWeek);
@@ -1105,8 +1303,47 @@
         renderLegend();
         renderGrid();
         renderStats();
+        // 保证折叠状态与当前屏幕匹配
+        updateSubjectChipsVisibility();
+      }
+
+      // ============================================================
+      //  9. 事件绑定：折叠切换 & 窗口resize
+      // ============================================================
+      document
+        .getElementById("subjectToggleBtn")
+        .addEventListener("click", toggleSubjectChips);
+
+      // 窗口resize时，根据宽度自动调整折叠状态
+      let resizeTimer;
+      window.addEventListener("resize", function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          // 如果宽度 > 768，强制展开；否则保持当前状态
+          if (window.innerWidth > 768) {
+            subjectChipsOpen = true;
+          } else {
+            // 手机端保持用户上次的选择，但如果没有手动切换过，默认折叠
+            // 这里不强制改变 subjectChipsOpen，只更新显示
+          }
+          updateSubjectChipsVisibility();
+        }, 150);
+      });
+
+      // ============================================================
+      //  10. 启动
+      // ============================================================
+      // 手机端默认折叠
+      if (window.innerWidth <= 768) {
+        subjectChipsOpen = false;
+      } else {
+        subjectChipsOpen = true;
       }
       renderAll();
+
+      // 暴露 setGroup 到全局
+      window.setGroup = setGroup;
+      window.showDetail = showDetail;
     </script>
   </body>
 </html>

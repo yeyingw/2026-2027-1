@@ -1,8 +1,8 @@
 <!--
 作者：雲
-功能：页面右上角新增github图标
+功能：优化手机端title显示，改为换行显示
 
-修改时间：2026年9月9日12:30
+修改时间：2026年9月10日17:08:56
 -->
 
 <!doctype html>
@@ -42,6 +42,9 @@
       .header h1 {
         font-size: 22px;
         margin-bottom: 6px;
+      }
+      .mobile-break {
+        display: none;
       }
       .header .subtitle {
         font-size: 13px;
@@ -518,6 +521,10 @@
         }
         .header h1 {
           font-size: 18px;
+          line-height: 1.45;
+        }
+        .mobile-break {
+          display: block;
         }
         /* 手机端角标稍小 */
         .github-corner svg {
@@ -743,7 +750,10 @@
   <body>
     <div class="container">
       <div class="header">
-        <h1>成都中医药大学 · 临床医学2023级宜宾二医院教学班</h1>
+        <h1>
+          成都中医药大学
+          <span class="mobile-break"></span>临床医学2023级宜宾二医院教学班
+        </h1>
         <div class="subtitle">
           2026-2027学年秋季学期 · 6门课总课表 · 理论+见习 ·
           教室：彭炳楼A区4楼1A404 / 各临床科室

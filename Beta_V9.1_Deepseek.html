@@ -1129,7 +1129,7 @@
       ];
       const START_HOUR = 8;
       const END_HOUR = 20;
-      const SEMESTER_START = new Date("2026-08-31");
+      const SEMESTER_START = new Date(2026, 7, 31);
 
       let currentWeek = 1;
       let hiddenSubjects = new Set();
@@ -1139,6 +1139,7 @@
 
       function getCurrentWeek() {
         const now = new Date();
+        now.setHours(0, 0, 0, 0);
         const start = new Date(SEMESTER_START);
         if (now < start) return 1;
         const diffDays = (now - start) / (1000 * 60 * 60 * 24);

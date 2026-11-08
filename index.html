@@ -1,16 +1,9 @@
 <!doctype html>
-<html>
+<html lang="zh-CN">
   <head>
-    <meta http-equiv="refresh" content="1; url=Beta_V10.1_Deepseek.html" />
-    <script>
-      // 自动跳转，兜底
-      setTimeout(() => {
-        window.location.href = "Beta_V10.1_Deepseek.html";
-      }, 1000);
-    </script>
-
     <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0.5; url=Beta_V10.1_Deepseek.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="refresh" content="1; url=Beta_V10.1_Deepseek.html" />
     <title>跳转中...</title>
     <style>
       * {
@@ -19,16 +12,17 @@
         box-sizing: border-box;
       }
       body {
-        /* 垂直+水平居中 */
         min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
         background-color: #ffffff;
-        font-family: system-ui, sans-serif;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
       }
       .box {
-        /* 浅底色 + 阴影，类似卡片按钮质感 */
         background-color: #f7f8fa;
         border: 3px solid #e5e7eb;
         border-radius: 12px;
@@ -57,5 +51,12 @@
         >。
       </p>
     </div>
+
+    <script>
+      // JS 兜底跳转：若 meta 刷新失效，1.2 秒后强制跳转
+      setTimeout(() => {
+        window.location.href = "Beta_V10.1_Deepseek.html";
+      }, 1200);
+    </script>
   </body>
 </html>

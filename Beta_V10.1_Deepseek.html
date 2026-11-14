@@ -1,7 +1,9 @@
 <!--
 作者：雲
-功能：取消手机端左侧时间栏固定，新增《临床能力综合训练》课程
-修改时间：2026年10月28日16:43:13
+功能：周六、周日打开页面，默认显示下一周课表；周末打开时，日期右侧出现橙色提示：普通周末 →「周末查看 · 已默认显示下一周课表」
+地址栏加 ?dow=6 可模拟周六，?dow=0 模拟周日，?dow=3 模拟周三。
+不带参数时按真实日期，正式使用不受影响。
+修改时间：2026年11月8日19:17:36
 -->
 
 <!doctype html>
@@ -178,6 +180,33 @@
         color: #666;
         white-space: nowrap;
       }
+
+      .weekend-hint {
+        display: none;
+        margin-left: 8px;
+        font-size: 12px;
+        color: #ff6b35;
+        background: #fff3e0;
+        padding: 2px 8px;
+        border-radius: 4px;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+      .weekend-hint.show {
+        display: inline-block;
+      }
+
+      @media (max-width: 768px) {
+        .weekend-hint {
+          margin-left: 0;
+          margin-top: 4px;
+          font-size: 11px;
+        }
+        .weekend-hint.show {
+          display: block;
+        }
+      }
+
       .filter-bar {
         background: white;
         padding: 10px 32px;
@@ -786,7 +815,10 @@
         <button class="today-btn" id="todayBtn">
           📅 今天 <span class="badge" id="todayBadge">--</span>
         </button>
-        <div class="date-info" id="dateInfo"></div>
+        <div class="date-info" id="dateInfo">
+          <span id="dateInfoText"></span>
+          <span class="weekend-hint" id="weekendHint"></span>
+        </div>
       </div>
 
       <div class="filter-bar">
@@ -1144,13 +1176,23 @@
 
       let subjectChipsOpen = false;
 
+      // 辅助：如果 URL 带 ?dow=6，就用参数模拟星期
+      function getDayOfWeek() {
+        const p = new URLSearchParams(location.search).get("dow");
+        if (p !== null) return parseInt(p, 10);
+        return new Date().getDay();
+      }
       function getCurrentWeek() {
         const now = new Date();
         now.setHours(0, 0, 0, 0);
         const start = new Date(SEMESTER_START);
         if (now < start) return 1;
         const diffDays = (now - start) / (1000 * 60 * 60 * 24);
-        const week = Math.floor(diffDays / 7) + 1;
+        let week = Math.floor(diffDays / 7) + 1;
+        // 周六(6)、周日(0) 自动视为下一周，方便提前看下周课表
+        const dow = getDayOfWeek();
+        if (dow === 6 || dow === 0) week += 1;
+        // 最后一周封顶，不会再往后跳
         return Math.min(week, TOTAL_WEEKS);
       }
 
@@ -1195,8 +1237,22 @@
 
       function renderDateInfo() {
         const dates = getWeekDates(currentWeek);
-        document.getElementById("dateInfo").textContent =
+        document.getElementById("dateInfoText").textContent =
           `第${currentWeek}周 · ${formatDate(dates[0])} - ${formatDate(dates[6])}`;
+      }
+
+      function updateWeekendHint() {
+        const hint = document.getElementById("weekendHint");
+        if (!hint) return;
+        const dow = getDayOfWeek(); // 0=周日, 6=周六
+        const isWeekend = dow === 0 || dow === 6;
+        if (isWeekend) {
+          hint.textContent =
+            currentWeek >= TOTAL_WEEKS
+              ? "周末查看 · 已是本学期最后一周"
+              : "周末查看 · 已默认显示下一周课表";
+        }
+        hint.classList.toggle("show", isWeekend);
       }
 
       function renderSubjectFilters() {
@@ -1447,6 +1503,7 @@
       function renderAll() {
         renderWeekSelector();
         renderDateInfo();
+        updateWeekendHint();
         renderSubjectFilters();
         renderLegend();
         renderGrid();

@@ -1,9 +1,7 @@
 <!--
 作者：雲
-功能：周六、周日打开页面，默认显示下一周课表；周末打开时，日期右侧出现橙色提示：普通周末 →「周末查看 · 已默认显示下一周课表」
-地址栏加 ?dow=6 可模拟周六，?dow=0 模拟周日，?dow=3 模拟周三。
-不带参数时按真实日期，正式使用不受影响。
-修改时间：2026年11月8日19:17:36
+功能：考试卡等高·时间轴紧凑
+修改时间：2026年11月26日
 -->
 
 <!doctype html>
@@ -14,7 +12,9 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes"
     />
-    <title>成中医 2023级 2026秋 总课表（点击详情·滑动查看）</title>
+    <title>
+      成中医 2023级 2026秋 总课表 · 6门课+技能训练（点击详情·滑动查看）
+    </title>
     <style>
       * {
         margin: 0;
@@ -50,6 +50,11 @@
       .header .subtitle {
         font-size: 13px;
         opacity: 0.9;
+      }
+      /* 新增：副标题强制两行（电脑、手机一致） */
+      .header .subtitle .sub-line {
+        display: block;
+        line-height: 1.7;
       }
 
       /* ---- 新增：GitHub 角标样式 ---- */
@@ -239,6 +244,9 @@
         gap: 4px 6px;
         align-items: center;
         transition: all 0.25s ease;
+      }
+      .chips-row {
+        display: contents; /* 让 chip 直接参与外层换行，单选/多选跟在科目后面 */
       }
       .filter-chip {
         padding: 4px 12px;
@@ -747,6 +755,338 @@
         }
       }
 
+      /* ============================================================
+         新增：模式切换（课表模式 / 考试模式）
+         ============================================================ */
+      .mode-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: #eef0f5;
+        border-radius: 8px;
+        padding: 3px;
+        flex-shrink: 0;
+      }
+      .mode-btn {
+        border: none;
+        background: transparent;
+        height: 30px;
+        padding: 0 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+      }
+      .mode-btn:hover {
+        color: #1a237e;
+      }
+      .mode-btn.active {
+        background: #1a237e;
+        color: #fff;
+        box-shadow: 0 1px 4px rgba(26, 35, 126, 0.28);
+      }
+      .mode-btn.active[data-mode="exam"] {
+        background: #c62828;
+        color: #fff;
+        box-shadow: 0 1px 4px rgba(198, 40, 40, 0.35);
+      }
+
+      /* 新增：科目筛选模式（单选 / 多选） */
+      .filter-mode {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+      }
+      .fm-btn {
+        height: 26px;
+        padding: 0 11px;
+        border: 1px solid #d9d9d9;
+        background: #fff;
+        color: #666;
+        border-radius: 13px;
+        font-size: 12px;
+        line-height: 1;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+      }
+      .fm-btn:hover {
+        border-color: #1a237e;
+        color: #1a237e;
+      }
+      .fm-btn.active {
+        background: #1a237e;
+        border-color: #1a237e;
+        color: #fff;
+        font-weight: 600;
+      }
+      body.exam-mode .fm-btn.active {
+        background: #c62828;
+        border-color: #c62828;
+      }
+      .filter-tip {
+        font-size: 11px;
+        color: #aaa;
+        white-space: nowrap;
+      }
+      .filter-chip.on {
+        font-weight: 600;
+      }
+      .reset-chip {
+        border: 1px dashed #c62828 !important;
+        background: #fff !important;
+        color: #c62828 !important;
+        font-weight: 600;
+      }
+
+      .exam-cd-inline {
+        font-weight: 700;
+        color: #c62828;
+      }
+      .exam-cd-inline.cd-over {
+        color: #999;
+      }
+      .exam-cd-inline.cd-live {
+        color: #2e7d32;
+      }
+
+      /* 新增：考试模式概览条 */
+      .exam-overview {
+        display: none;
+        background: #fff;
+        border-bottom: 1px solid #eee;
+        padding: 12px 32px;
+      }
+      body.exam-mode .exam-overview {
+        display: block;
+      }
+      .eo-main {
+        display: flex;
+        align-items: center;
+        gap: 10px 14px;
+        flex-wrap: wrap;
+      }
+      .eo-tag {
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        background: #c62828;
+        border-radius: 4px;
+        padding: 2px 8px;
+      }
+      .eo-tag.done {
+        background: #9e9e9e;
+      }
+      .eo-name {
+        font-size: 17px;
+        font-weight: 700;
+        color: #c62828;
+      }
+      .eo-meta {
+        font-size: 13px;
+        color: #555;
+      }
+      .eo-cd {
+        margin-left: auto;
+        font-size: 20px;
+        font-weight: 800;
+        color: #c62828;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.5px;
+      }
+      .eo-cd.cd-over {
+        color: #9e9e9e;
+      }
+      .eo-cd.cd-live {
+        color: #2e7d32;
+      }
+      .eo-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 8px;
+        margin-top: 10px;
+      }
+      .eo-item {
+        font-size: 11px;
+        color: #666;
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 2px 9px;
+        white-space: nowrap;
+      }
+      .eo-item b {
+        color: #c62828;
+        font-weight: 700;
+        margin-right: 4px;
+      }
+      .eo-item em {
+        font-style: normal;
+        color: #8e0000;
+        font-weight: 600;
+        margin-left: 4px;
+      }
+      .eo-item em.cd-over {
+        color: #aaa;
+        text-decoration: line-through;
+      }
+
+      /* 新增：考试列头 */
+      .grid-header.exam-head {
+        background: linear-gradient(180deg, #fff6f6, #ffe9e9);
+        border-bottom: 2px solid #c62828;
+        padding: 6px 4px;
+      }
+      .exam-head .ed-date {
+        font-size: 16px;
+        font-weight: 700;
+        color: #c62828;
+        line-height: 1.2;
+      }
+      .exam-head .ed-sub {
+        font-size: 11px;
+        color: #777;
+        font-weight: 400;
+        margin-top: 1px;
+      }
+      .exam-head .ed-cd {
+        display: inline-block;
+        margin-top: 3px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #8e0000;
+        background: #fff;
+        border: 1px solid #f0b9b9;
+        border-radius: 8px;
+        padding: 1px 7px;
+        line-height: 1.4;
+      }
+      .exam-head .ed-cd.cd-over {
+        color: #aaa;
+        border-color: #e0e0e0;
+        background: #fafafa;
+      }
+      .exam-head .ed-cd.cd-live {
+        color: #fff;
+        background: #2e7d32;
+        border-color: #2e7d32;
+      }
+
+      /* 新增：考试卡片 */
+      .exam-card {
+        max-width: 420px;
+        padding: 4px 7px;
+        border-left: 4px solid #ffd54f;
+        box-shadow: 0 2px 10px rgba(198, 40, 40, 0.35);
+        z-index: 3;
+        font-size: 13px;
+      }
+      .exam-card .exam-flag {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        background: rgba(255, 255, 255, 0.22);
+        border-radius: 4px;
+        padding: 1px 6px;
+        margin-bottom: 2px;
+        line-height: 1.5;
+      }
+      .exam-card .course-name {
+        font-size: 15px;
+        margin-bottom: 1px;
+      }
+      .exam-card .course-meta {
+        font-size: 11px;
+        line-height: 1.35;
+      }
+      .exam-card .exam-cd {
+        display: inline-block;
+        margin-top: 2px;
+        font-size: 11px;
+        font-weight: 700;
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 4px;
+        padding: 1px 6px;
+        line-height: 1.5;
+      }
+      .exam-card .exam-cd.cd-over {
+        opacity: 0.6;
+        text-decoration: line-through;
+      }
+      .exam-card .exam-cd.cd-live {
+        background: #ffd54f;
+        color: #7f0000;
+      }
+
+      /* 新增：有期末考试的周次角标 */
+      .week-btn.has-exam::before {
+        content: "";
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #c62828;
+      }
+      .week-btn.active.has-exam::before {
+        background: #ffd54f;
+      }
+
+      /* 新增：考试模式下隐藏周次相关控件 */
+      body.exam-mode .week-label,
+      body.exam-mode .week-selector,
+      body.exam-mode #todayBtn,
+      body.exam-mode #dateInfo {
+        display: none !important;
+      }
+
+      @media (max-width: 768px) {
+        .mode-switch {
+          width: 100%;
+          order: 0;
+        }
+        .mode-btn {
+          flex: 1 1 0;
+          height: 28px;
+          font-size: 12px;
+          padding: 0 8px;
+        }
+        .filter-tip {
+          display: none;
+        }
+        .exam-overview {
+          padding: 10px 16px;
+        }
+        .eo-name {
+          font-size: 15px;
+        }
+        .eo-meta {
+          font-size: 12px;
+        }
+        .eo-cd {
+          margin-left: 0;
+          width: 100%;
+          font-size: 17px;
+        }
+        .exam-head .ed-date {
+          font-size: 14px;
+        }
+        .exam-head .ed-sub,
+        .exam-head .ed-cd {
+          font-size: 10px;
+        }
+        .exam-card .course-name {
+          font-size: 14px;
+        }
+      }
+
       @media print {
         body {
           background: white;
@@ -783,8 +1123,10 @@
           <span class="mobile-break"></span>临床医学2023级宜宾二医院教学班
         </h1>
         <div class="subtitle">
-          2026-2027学年秋季学期 · 6门课总课表 · 理论+见习 ·
-          教室：彭炳楼A区4楼1A404 / 各临床科室
+          <span class="sub-line"
+            >2026-2027学年秋季学期&nbsp;&nbsp;&nbsp;6门课 + 技能训练</span
+          >
+          <span class="sub-line">教室：彭炳楼A区4楼1A404 / 各临床科室</span>
         </div>
         <!-- 新增：GitHub 角标 -->
         <a
@@ -810,7 +1152,23 @@
       </div>
 
       <div class="controls">
-        <label>周次：</label>
+        <div class="mode-switch" id="modeSwitch">
+          <button
+            class="mode-btn active"
+            data-mode="schedule"
+            onclick="setViewMode('schedule')"
+          >
+            📚 课表模式
+          </button>
+          <button
+            class="mode-btn"
+            data-mode="exam"
+            onclick="setViewMode('exam')"
+          >
+            🎯 考试模式
+          </button>
+        </div>
+        <label class="week-label">周次：</label>
         <div class="week-selector" id="weekSelector"></div>
         <button class="today-btn" id="todayBtn">
           📅 今天 <span class="badge" id="todayBadge">--</span>
@@ -827,7 +1185,28 @@
           <button class="subject-toggle-btn" id="subjectToggleBtn">
             科目 <span class="arrow" id="subjectArrow">▼</span>
           </button>
-          <div class="subject-chips" id="subjectChips"></div>
+          <div class="subject-chips" id="subjectChips">
+            <div class="chips-row" id="chipsRow"></div>
+            <div class="filter-mode" id="filterMode">
+              <button
+                class="fm-btn active"
+                data-fm="single"
+                onclick="setFilterMode('single')"
+              >
+                单选
+              </button>
+              <button
+                class="fm-btn"
+                data-fm="multi"
+                onclick="setFilterMode('multi')"
+              >
+                多选
+              </button>
+              <span class="filter-tip" id="filterTip"
+                >单选：点科目只看该科，再点一次回到全部</span
+              >
+            </div>
+          </div>
         </div>
 
         <div class="group-filter">
@@ -850,12 +1229,16 @@
 
       <div class="legend" id="legend"></div>
 
+      <div class="exam-overview" id="examOverview"></div>
+
       <div class="schedule-wrapper" id="scheduleWrapper">
         <div class="schedule-grid" id="scheduleGrid"></div>
       </div>
 
       <div class="stats" id="stats"></div>
-      <div class="footer">点击课程卡片查看详情 · 手机左右滑动查看每日课程</div>
+      <div class="footer">
+        点击课程 / 考试卡片查看详情 · 手机左右滑动查看每日课程
+      </div>
     </div>
 
     <div class="modal-overlay" id="modalOverlay">
@@ -890,15 +1273,83 @@
         综合训练: "临床能力综合训练", // 新增名称简写映射
       };
 
+      // ============================================================
+      //  1.1 新增：期末考试数据（以后改考试就改这里）
+      //  字段说明：日期用 YYYY-MM-DD；时间用 HH:MM；
+      //           place=考场，paper=试卷号，group=组别，没有就留空
+      // ============================================================
+      const examData = [
+        {
+          subject: "皮肤性病学",
+          date: "2026-12-04",
+          start: "18:30",
+          end: "20:30",
+          place: "宜宾教学二医院专用教室",
+          paper: "",
+          group: "",
+        },
+        {
+          subject: "耳鼻咽喉头颈外科学",
+          date: "2026-12-21",
+          start: "09:00",
+          end: "11:00",
+          place: "宜宾教学二医院专用教室",
+          paper: "",
+          group: "",
+        },
+        {
+          subject: "传染病学",
+          date: "2026-12-25",
+          start: "14:00",
+          end: "16:00",
+          place: "宜宾教学二医院专用教室",
+          paper: "",
+          group: "",
+        },
+        {
+          subject: "内科学",
+          date: "2027-01-07",
+          start: "08:00",
+          end: "10:00",
+          place: "宜宾教学二医院专用教室",
+          paper: "30223",
+          group: "01、02",
+        },
+        {
+          subject: "外科学",
+          date: "2027-01-08",
+          start: "10:30",
+          end: "12:30",
+          place: "宜宾教学二医院专用教室",
+          paper: "30224",
+          group: "03、04、05",
+        },
+      ];
+
+      // 考试卡片配色："unified" = 统一深红（推荐）；"subject" = 跟随科目色
+      const EXAM_CARD_STYLE = "unified";
+
       const DEFAULT_ROW_HEIGHT = 55;
       const COMPACT_ROW_HEIGHT = 25;
 
       const COMPACT_HOURS = new Set([11, 12, 13, 18]);
 
+      // 考试模式：统一、更紧凑的行高；考试卡片统一高度
+      const EXAM_ROW_HEIGHT = 42;
+      const EXAM_CARD_HEIGHT = 102;
+      let axisMode = "schedule"; // schedule=课表时间轴（原行高） / exam=紧凑时间轴
+
       function getHourHeight(hour) {
+        if (axisMode === "exam") return EXAM_ROW_HEIGHT;
         return COMPACT_HOURS.has(hour)
           ? COMPACT_ROW_HEIGHT
           : DEFAULT_ROW_HEIGHT;
+      }
+
+      function axisTotalHeight() {
+        let total = 0;
+        for (let h = START_HOUR; h < END_HOUR; h++) total += getHourHeight(h);
+        return total;
       }
 
       function getCumulativeHeight(minutes) {
@@ -1156,7 +1607,8 @@
       // ============================================================
       //  4. 全局状态 & 工具
       // ============================================================
-      const TOTAL_WEEKS = 17;
+      // 原来 17 周；第18周空周，第19周有内科、外科期末考试，故扩展到 19
+      const TOTAL_WEEKS = 19;
       const DAY_NAMES = [
         "周一",
         "周二",
@@ -1167,12 +1619,78 @@
         "周日",
       ];
       const START_HOUR = 8;
-      const END_HOUR = 20;
+      // 原为 20（20:00 结束）；为容纳 12/4 18:30-20:30 的晚间考试，延长到 21:00
+      const END_HOUR = 21;
       const SEMESTER_START = new Date(2026, 7, 31);
 
+      // 考试模式时间轴画到 21:00（与课表模式一致），容纳 18:30 的晚间考试
+      const EXAM_END_HOUR = END_HOUR - 1;
+
+      function parseYMD(str) {
+        const parts = str.split("-").map(Number);
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+
+      // 把考试数据算成：第几周、周几、开始/结束时间戳
+      const exams = examData
+        .map((e, i) => {
+          const d = parseYMD(e.date);
+          const dayIdx = (d.getDay() + 6) % 7; // 0 = 周一
+          const diffDays = Math.round((d - SEMESTER_START) / 86400000);
+          const week = Math.floor(diffDays / 7) + 1;
+          const sh = parseInt(e.start.split(":")[0], 10);
+          const sm = parseInt(e.start.split(":")[1], 10);
+          const eh = parseInt(e.end.split(":")[0], 10);
+          const em = parseInt(e.end.split(":")[1], 10);
+          return {
+            id: "ex" + i,
+            subject: e.subject,
+            date: e.date,
+            start: e.start,
+            end: e.end,
+            place: e.place || "",
+            paper: e.paper || "",
+            group: e.group || "",
+            dateObj: d,
+            week: week,
+            day: dayIdx + 1,
+            startAt: new Date(
+              d.getFullYear(),
+              d.getMonth(),
+              d.getDate(),
+              sh,
+              sm,
+              0,
+              0,
+            ),
+            endAt: new Date(
+              d.getFullYear(),
+              d.getMonth(),
+              d.getDate(),
+              eh,
+              em,
+              0,
+              0,
+            ),
+            monthDay: `${d.getMonth() + 1}月${d.getDate()}日`,
+          };
+        })
+        .sort((a, b) => a.startAt - b.startAt);
+
+      const examMap = {};
+      exams.forEach((e) => {
+        examMap[e.id] = e;
+      });
+
       let currentWeek = 1;
-      let hiddenSubjects = new Set();
       let currentGroup = "all";
+
+      // 新增：视图模式（schedule=课表 / exam=考试）与科目筛选状态
+      let viewMode = "schedule";
+      let filterMode = "single"; // single=单选，multi=多选
+      let prevFilterMode = "single";
+      let selectedSubjects = new Set(); // 空集合 = 全部显示
+      let overviewNextId = null;
 
       let subjectChipsOpen = false;
 
@@ -1212,6 +1730,7 @@
       function renderWeekSelector() {
         const container = document.getElementById("weekSelector");
         const weeksWithClass = new Set(courses.map((c) => c.week));
+        const weeksWithExam = new Set(exams.map((e) => e.week));
         const todayWeek = getCurrentWeek();
         container.innerHTML = "";
         for (let w = 1; w <= TOTAL_WEEKS; w++) {
@@ -1221,6 +1740,7 @@
             "week-btn" +
             (w === currentWeek ? " active" : "") +
             (weeksWithClass.has(w) ? " has-class" : "") +
+            (weeksWithExam.has(w) ? " has-exam" : "") +
             (isCurrent ? " current-week" : "");
           btn.innerHTML = w + (isCurrent ? ' <span class="star">★</span>' : "");
           btn.onclick = () => {
@@ -1255,23 +1775,77 @@
         hint.classList.toggle("show", isWeekend);
       }
 
+      function chipSubjects() {
+        if (viewMode === "exam") {
+          return [...new Set(exams.map((e) => e.subject))];
+        }
+        return [...new Set(courses.map((c) => c.subject))];
+      }
+
+      // 新增逻辑：点科目 = 只看这一科（可多选）；空集合 = 全部
       function renderSubjectFilters() {
-        const container = document.getElementById("subjectChips");
-        const subjects = [...new Set(courses.map((c) => c.subject))];
+        const container = document.getElementById("chipsRow");
+        const subjects = chipSubjects();
         container.innerHTML = "";
-        subjects.forEach((s) => {
-          const chip = document.createElement("span");
-          chip.className =
-            "filter-chip" + (hiddenSubjects.has(s) ? " off" : "");
-          chip.innerHTML = `<span class="dot" style="background:${subjectColors[s] || "#999"}"></span>${s}`;
-          chip.onclick = () => {
-            if (hiddenSubjects.has(s)) hiddenSubjects.delete(s);
-            else hiddenSubjects.add(s);
+
+        if (selectedSubjects.size > 0) {
+          const reset = document.createElement("span");
+          reset.className = "filter-chip reset-chip";
+          reset.textContent = viewMode === "exam" ? "✕ 全部考试" : "✕ 全部科目";
+          reset.title = "恢复显示全部";
+          reset.onclick = () => {
+            selectedSubjects.clear();
             renderAll();
           };
+          container.appendChild(reset);
+        }
+
+        subjects.forEach((s) => {
+          const on = isSubjectVisible(s);
+          const active = selectedSubjects.size > 0 && on; // 真正被点选的科目
+          const color =
+            subjectColors[s] || (viewMode === "exam" ? "#c62828" : "#999");
+          const chip = document.createElement("span");
+          chip.className = "filter-chip" + (on ? " on" : "");
+          // 全部显示时保持原样式（白底），选中某科时才实色填充
+          chip.style.borderColor = active ? color : "#ddd";
+          chip.style.background = active ? color : "#ffffff";
+          chip.style.color = active ? "#ffffff" : on ? "#333" : "#bbbbbb";
+          chip.style.opacity = on ? "1" : "0.5";
+          chip.innerHTML = `<span class="dot" style="background:${
+            active ? "rgba(255,255,255,.9)" : color
+          }"></span>${s}`;
+          chip.title = "点击只看这一科，再点一次恢复全部";
+          chip.onclick = () => toggleSubjectChip(s);
           container.appendChild(chip);
         });
+
+        syncFilterModeUI();
         updateSubjectChipsVisibility();
+      }
+
+      function isSubjectVisible(s) {
+        return selectedSubjects.size === 0 || selectedSubjects.has(s);
+      }
+
+      function toggleSubjectChip(s) {
+        if (filterMode === "single") {
+          if (selectedSubjects.size === 1 && selectedSubjects.has(s)) {
+            selectedSubjects.clear(); // 再点一次 = 回到全部
+          } else {
+            selectedSubjects.clear();
+            selectedSubjects.add(s); // 单选：点谁只剩谁
+          }
+        } else {
+          if (selectedSubjects.size === 0) {
+            selectedSubjects.add(s); // 从"全部"进多选，先只看这一科
+          } else if (selectedSubjects.has(s)) {
+            selectedSubjects.delete(s);
+          } else {
+            selectedSubjects.add(s);
+          }
+        }
+        renderAll();
       }
 
       function updateSubjectChipsVisibility() {
@@ -1307,6 +1881,7 @@
           html += `<div class="legend-item"><div class="legend-dot" style="background:${subjectColors[s] || "#999"}"></div>${s}</div>`;
         });
         html += `<div class="legend-item"><div class="legend-dot" style="background:#fff;border:2px dashed #999"></div>见习课(虚线边)</div>`;
+        html += `<div class="legend-item"><div class="legend-dot" style="background:#c62828;border-left:3px solid #ffd54f"></div>期末考试</div>`;
         container.innerHTML = html;
       }
 
@@ -1320,7 +1895,7 @@
 
       function getFilteredCourses() {
         return courses.filter((c) => {
-          if (hiddenSubjects.has(c.subject)) return false;
+          if (!isSubjectVisible(c.subject)) return false;
           if (currentGroup !== "all" && c.group) {
             if (c.group.includes("第1、2组") || c.group.includes("第1,2组"))
               return true;
@@ -1356,6 +1931,11 @@
       // ============================================================
       function renderGrid() {
         const grid = document.getElementById("scheduleGrid");
+        // 从考试模式切回来时，恢复默认列宽
+        axisMode = "schedule";
+        grid.style.gridTemplateColumns = "";
+        grid.style.width = "";
+        grid.style.minWidth = "";
         const dates = getWeekDates(currentWeek);
         const filtered = getFilteredCourses();
         const weekCourses = filtered.filter((c) => c.week === currentWeek);
@@ -1369,7 +1949,8 @@
         }
 
         const rowsStr = rowHeights.map((h) => h + "px").join(" ");
-        grid.style.gridTemplateRows = rowsStr;
+        // 表头单独占一行，否则时间轴会被压掉一行、底部课程/考试卡被裁切
+        grid.style.gridTemplateRows = "55px " + rowsStr;
 
         let html = "";
         html += `<div class="grid-header" style="border-bottom:2px solid #1a237e">时间</div>`;
@@ -1394,37 +1975,60 @@
             html += `<div class="day-cell" style="height:${hh}px;"></div>`;
           }
 
-          const timeGroups = {};
-          dayCourses.forEach((c) => {
-            const key = `${c.start}|${c.end}`;
-            if (!timeGroups[key]) timeGroups[key] = [];
-            timeGroups[key].push(c);
-          });
+          html += dayCardsHTML(dayCourses);
 
-          Object.values(timeGroups).forEach((group) => {
-            const count = group.length;
-            const gapPct = 0.8;
-            const marginPct = 0.5;
-            const totalGap = (count - 1) * gapPct + 2 * marginPct;
-            const widthPct = (100 - totalGap) / count;
+          // 新增：当天有期末考试，就把考试卡片叠在这一天
+          exams
+            .filter(
+              (e) =>
+                e.week === currentWeek &&
+                e.day === dayNum &&
+                isSubjectVisible(e.subject),
+            )
+            .forEach((e) => {
+              html += examCardHTML(e);
+            });
 
-            group.forEach((c, idx) => {
-              const leftPct = marginPct + idx * (widthPct + gapPct);
-              const startMin = timeToMinutes(c.start);
-              const endMin = timeToMinutes(c.end);
+          html += "</div>";
+        }
 
-              const top = getCumulativeHeight(startMin);
-              const bottom = getCumulativeHeight(endMin);
-              const height = Math.max(bottom - top - 2, 28);
+        grid.innerHTML = html;
+      }
 
-              const color = subjectColors[c.subject] || "#666";
-              const isPrac = c.type === "practice";
-              const groupHtml = c.group
-                ? `<span class="group-tag">${c.group}</span>`
-                : "";
-              const displayName = c.name.split("\n")[0];
+      // 一天的课程卡片（原 renderGrid 里的排版逻辑，抽出来复用）
+      function dayCardsHTML(dayCourses) {
+        let html = "";
+        const timeGroups = {};
+        dayCourses.forEach((c) => {
+          const key = `${c.start}|${c.end}`;
+          if (!timeGroups[key]) timeGroups[key] = [];
+          timeGroups[key].push(c);
+        });
 
-              html += `
+        Object.values(timeGroups).forEach((group) => {
+          const count = group.length;
+          const gapPct = 0.8;
+          const marginPct = 0.5;
+          const totalGap = (count - 1) * gapPct + 2 * marginPct;
+          const widthPct = (100 - totalGap) / count;
+
+          group.forEach((c, idx) => {
+            const leftPct = marginPct + idx * (widthPct + gapPct);
+            const startMin = timeToMinutes(c.start);
+            const endMin = timeToMinutes(c.end);
+
+            const top = getCumulativeHeight(startMin);
+            const bottom = getCumulativeHeight(endMin);
+            const height = Math.max(bottom - top - 2, 28);
+
+            const color = subjectColors[c.subject] || "#666";
+            const isPrac = c.type === "practice";
+            const groupHtml = c.group
+              ? `<span class="group-tag">${c.group}</span>`
+              : "";
+            const displayName = c.name.split("\n")[0];
+
+            html += `
                     <div class="course-card ${isPrac ? "practice" : ""}" 
                          style="top:${top}px; height:${height}px; left:${leftPct}%; width:${widthPct}%; background:linear-gradient(135deg, ${color}, ${color}dd);"
                          data-subject="${c.subject}"
@@ -1440,13 +2044,238 @@
                         ${groupHtml}
                     </div>
                     `;
-            });
           });
+        });
 
-          html += "</div>";
+        return html;
+      }
+
+      // ============================================================
+      //  6.5 新增：期末考试（考试卡片 · 考试模式 · 倒计时）
+      // ============================================================
+      const DAY_FULL = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+
+      function examState(ex, now) {
+        const t = now || Date.now();
+        if (t >= ex.endAt.getTime()) return "over";
+        if (t >= ex.startAt.getTime()) return "live";
+        return "future";
+      }
+
+      function fmtCountdown(ex, now) {
+        const t = now || Date.now();
+        const st = examState(ex, t);
+        if (st === "over") return "已结束";
+        if (st === "live") return "🟢 正在考试";
+        const total = Math.floor((ex.startAt.getTime() - t) / 1000);
+        const d = Math.floor(total / 86400);
+        const h = Math.floor((total % 86400) / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = total % 60;
+        if (d > 0) return h > 0 ? `还有 ${d}天${h}小时` : `还有 ${d}天`;
+        if (h > 0) return `还有 ${h}小时${m}分`;
+        if (m > 0) return `还有 ${m}分${s}秒`;
+        return `还有 ${s}秒`;
+      }
+
+      function fmtCountdownFull(ex, now) {
+        const t = now || Date.now();
+        const st = examState(ex, t);
+        if (st === "over") return "已结束";
+        if (st === "live") return "考试进行中";
+        const total = Math.floor((ex.startAt.getTime() - t) / 1000);
+        const d = Math.floor(total / 86400);
+        const h = Math.floor((total % 86400) / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = total % 60;
+        const pad = (n) => String(n).padStart(2, "0");
+        const hms = `${pad(h)}:${pad(m)}:${pad(s)}`;
+        return d > 0 ? `${d}天 ${hms}` : hms;
+      }
+
+      function examCardHTML(ex) {
+        const color =
+          EXAM_CARD_STYLE === "subject"
+            ? subjectColors[ex.subject] || "#c62828"
+            : "#c62828";
+        const bg =
+          EXAM_CARD_STYLE === "subject"
+            ? `linear-gradient(135deg, ${color}, ${color}dd)`
+            : "linear-gradient(135deg, #c62828, #8e0000)";
+        // 所有考试卡等高；若贴近底部则整体上移，避免被裁
+        const total = axisTotalHeight();
+        let top = getCumulativeHeight(timeToMinutes(ex.start));
+        if (top + EXAM_CARD_HEIGHT > total) {
+          top = Math.max(0, total - EXAM_CARD_HEIGHT);
         }
+        const height = EXAM_CARD_HEIGHT;
+        return `
+                <div class="course-card exam-card"
+                     style="top:${top}px; height:${height}px; left:0.5%; width:99%; background:${bg};"
+                     data-exam-id="${ex.id}"
+                     onclick="showExamDetail(this)">
+                    <div class="exam-flag">🎯 期末考试</div>
+                    <div class="course-name">${ex.subject}</div>
+                    <div class="course-meta">🕐 ${ex.start}-${ex.end}<br>📍 ${ex.place}</div>
+                    <div class="exam-cd" data-cd-exam="${ex.id}" data-cd-mode="short">${fmtCountdown(ex)}</div>
+                </div>`;
+      }
+
+      // 考试模式：一列一场考试，列头 = 日期 + 周几 + 倒计时
+      function renderExamGrid() {
+        axisMode = "exam";
+        const grid = document.getElementById("scheduleGrid");
+        const colExams = exams.filter((e) => isSubjectVisible(e.subject));
+        const hours = [];
+        for (let h = START_HOUR; h <= EXAM_END_HOUR; h++) hours.push(h);
+        const totalHeight = hours.reduce((sum, h) => sum + getHourHeight(h), 0);
+        const cols = Math.max(colExams.length, 1);
+        const filtered = getFilteredCourses();
+
+        grid.style.gridTemplateColumns = `60px repeat(${cols}, minmax(200px, 1fr))`;
+        grid.style.gridTemplateRows =
+          "78px " + hours.map((h) => getHourHeight(h) + "px").join(" ");
+        grid.style.width = "100%";
+        const colMinWidth = window.innerWidth <= 768 ? 160 : 200;
+        grid.style.minWidth = cols * colMinWidth + 60 + "px";
+
+        let html = `<div class="grid-header" style="border-bottom:2px solid #c62828">时间</div>`;
+        if (colExams.length === 0) {
+          html += `<div class="grid-header exam-head"><div class="ed-date">—</div><div class="ed-sub">未选择考试科目</div></div>`;
+        }
+        colExams.forEach((ex) => {
+          html += `<div class="grid-header exam-head">
+                    <div class="ed-date">${ex.monthDay}</div>
+                    <div class="ed-sub">${DAY_FULL[ex.day - 1]} · 第${ex.week}周</div>
+                    <div class="ed-cd" data-cd-exam="${ex.id}" data-cd-mode="short">${fmtCountdown(ex)}</div>
+                  </div>`;
+        });
+
+        html += `<div class="time-col" style="height:${totalHeight}px;">`;
+        hours.forEach((h) => {
+          html += `<div class="time-slot" style="height:${getHourHeight(h)}px;">${h}:00</div>`;
+        });
+        html += "</div>";
+
+        colExams.forEach((ex) => {
+          html += `<div class="day-col" style="height:${totalHeight}px;min-height:0;">`;
+          hours.forEach((h) => {
+            html += `<div class="day-cell" style="height:${getHourHeight(h)}px;"></div>`;
+          });
+          const dayCourses = filtered.filter(
+            (c) => c.week === ex.week && c.day === ex.day,
+          );
+          html += dayCardsHTML(dayCourses);
+          html += examCardHTML(ex);
+          html += "</div>";
+        });
 
         grid.innerHTML = html;
+      }
+
+      // 考试模式顶部：下一场 + 5 场倒计时
+      function renderExamOverview() {
+        const el = document.getElementById("examOverview");
+        if (!el) return;
+        const now = Date.now();
+        const next = exams.find((e) => e.endAt.getTime() > now);
+        const finished = exams.filter((e) => e.endAt.getTime() <= now).length;
+
+        if (!next) {
+          overviewNextId = null;
+          el.innerHTML = `<div class="eo-main"><span class="eo-tag done">全部结束</span><span class="eo-name">5 场期末考试已全部结束</span><span class="eo-meta">已结束 ${finished}/${exams.length} 场</span></div>`;
+          return;
+        }
+
+        overviewNextId = next.id;
+        el.innerHTML = `
+          <div class="eo-main">
+            <span class="eo-tag">下一场</span>
+            <span class="eo-name">${next.subject}</span>
+            <span class="eo-meta">${next.date} ${DAY_FULL[next.day - 1]} ${next.start}-${next.end} · ${next.place}</span>
+            <span class="eo-cd" data-cd-exam="${next.id}" data-cd-mode="full">${fmtCountdownFull(next)}</span>
+          </div>
+          <div class="eo-list">
+            ${exams
+              .map(
+                (e) =>
+                  `<span class="eo-item"><b>${e.monthDay}</b>${e.subject}<em data-cd-exam="${e.id}">${fmtCountdown(e)}</em></span>`,
+              )
+              .join("")}
+            <span class="eo-item">已完成 ${finished}/${exams.length} 场</span>
+          </div>`;
+      }
+
+      // 每秒刷新所有倒计时
+      function updateCountdowns() {
+        document.querySelectorAll("[data-cd-exam]").forEach((el) => {
+          const ex = examMap[el.dataset.cdExam];
+          if (!ex) return;
+          el.textContent =
+            el.dataset.cdMode === "full"
+              ? fmtCountdownFull(ex)
+              : fmtCountdown(ex);
+          const st = examState(ex);
+          el.classList.toggle("cd-over", st === "over");
+          el.classList.toggle("cd-live", st === "live");
+        });
+        if (viewMode === "exam" && overviewNextId) {
+          const ex = examMap[overviewNextId];
+          if (ex && ex.endAt.getTime() <= Date.now()) renderExamOverview();
+        }
+      }
+
+      function setViewMode(mode) {
+        if (mode === viewMode) return;
+        if (mode === "exam") {
+          prevFilterMode = filterMode;
+          filterMode = "single"; // 考试模式默认单选：点一科只看那一场
+          // 考试模式默认显示全部 5 场；只有单独选中某一考试科目时才保留
+          const examSubjects = new Set(exams.map((e) => e.subject));
+          if (
+            selectedSubjects.size > 1 ||
+            [...selectedSubjects].some((x) => !examSubjects.has(x))
+          ) {
+            selectedSubjects.clear();
+          }
+        } else {
+          filterMode = prevFilterMode || "single";
+        }
+        viewMode = mode;
+        document.body.classList.toggle("exam-mode", mode === "exam");
+        document.querySelectorAll(".mode-btn").forEach((b) => {
+          b.classList.toggle("active", b.dataset.mode === mode);
+        });
+        renderAll();
+        if (mode === "exam") {
+          document.querySelector(".schedule-wrapper")?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }
+
+      function setFilterMode(m) {
+        filterMode = m;
+        if (m === "single" && selectedSubjects.size > 1) {
+          const first = [...selectedSubjects][0];
+          selectedSubjects.clear();
+          selectedSubjects.add(first);
+        }
+        renderAll();
+      }
+
+      function syncFilterModeUI() {
+        document.querySelectorAll(".fm-btn").forEach((b) => {
+          b.classList.toggle("active", b.dataset.fm === filterMode);
+        });
+        const tip = document.getElementById("filterTip");
+        if (tip) {
+          tip.textContent =
+            filterMode === "single"
+              ? "单选：点科目只看该科，再点一次回到全部"
+              : "多选：可同时选多科，清空即全部";
+        }
       }
 
       // ============================================================
@@ -1471,6 +2300,24 @@
         document.getElementById("modalOverlay").classList.add("active");
       }
 
+      function showExamDetail(el) {
+        const ex = examMap[el.dataset.examId];
+        if (!ex) return;
+        document.getElementById("modalTitle").textContent =
+          `${ex.subject} · 期末考试`;
+        document.getElementById("modalDetail").innerHTML = `
+            <div><span class="label">科目</span><span class="value">${ex.subject}</span></div>
+            <div><span class="label">日期</span><span class="value">${ex.date} ${DAY_FULL[ex.day - 1]}（第${ex.week}周）</span></div>
+            <div><span class="label">时间</span><span class="value">${ex.start} - ${ex.end}</span></div>
+            ${ex.place ? `<div><span class="label">考场</span><span class="value">${ex.place}</span></div>` : ""}
+            ${ex.paper ? `<div><span class="label">试卷号</span><span class="value">${ex.paper}</span></div>` : ""}
+            ${ex.group ? `<div><span class="label">组别</span><span class="value">${ex.group}</span></div>` : ""}
+            <div class="divider"></div>
+            <div><span class="label">倒计时</span><span class="value exam-cd-inline" data-cd-exam="${ex.id}" data-cd-mode="short">${fmtCountdown(ex)}</span></div>
+        `;
+        document.getElementById("modalOverlay").classList.add("active");
+      }
+
       document
         .getElementById("modalClose")
         .addEventListener("click", function () {
@@ -1488,6 +2335,15 @@
       //  8. 统计 & 全部渲染
       // ============================================================
       function renderStats() {
+        if (viewMode === "exam") {
+          const visible = exams.filter((e) => isSubjectVisible(e.subject));
+          const finished = visible.filter(
+            (e) => e.endAt.getTime() <= Date.now(),
+          ).length;
+          document.getElementById("stats").textContent =
+            `考试模式：共 ${exams.length} 场期末考试 · 当前显示 ${visible.length} 场 · 已结束 ${finished} 场`;
+          return;
+        }
         const filtered = getFilteredCourses();
         const weekCourses = filtered.filter((c) => c.week === currentWeek);
         const theoryCount = weekCourses.filter(
@@ -1496,8 +2352,12 @@
         const practiceCount = weekCourses.filter(
           (c) => c.type === "practice",
         ).length;
+        const weekExamCount = exams.filter(
+          (e) => e.week === currentWeek && isSubjectVisible(e.subject),
+        ).length;
         document.getElementById("stats").textContent =
-          `第${currentWeek}周共 ${weekCourses.length} 节课（理论 ${theoryCount} · 见习 ${practiceCount}）`;
+          `第${currentWeek}周共 ${weekCourses.length} 节课（理论 ${theoryCount} · 见习 ${practiceCount}）` +
+          (weekExamCount ? ` · 期末考试 ${weekExamCount} 场` : "");
       }
 
       function renderAll() {
@@ -1506,9 +2366,16 @@
         updateWeekendHint();
         renderSubjectFilters();
         renderLegend();
-        renderGrid();
+        if (viewMode === "exam") {
+          renderExamOverview();
+          renderExamGrid();
+        } else {
+          document.getElementById("examOverview").innerHTML = "";
+          renderGrid();
+        }
         renderStats();
         updateSubjectChipsVisibility();
+        updateCountdowns();
       }
 
       // ============================================================
@@ -1545,7 +2412,14 @@
 
       window.setGroup = setGroup;
       window.showDetail = showDetail;
+      window.showExamDetail = showExamDetail;
       window.goToToday = goToToday;
+      window.setViewMode = setViewMode;
+      window.setFilterMode = setFilterMode;
+      window.toggleSubjectChip = toggleSubjectChip;
+
+      // 每秒刷新倒计时
+      setInterval(updateCountdowns, 1000);
     </script>
   </body>
 </html>

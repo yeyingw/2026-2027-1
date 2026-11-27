@@ -1,7 +1,7 @@
 <!--
 作者：雲
-功能：考试卡等高·时间轴紧凑
-修改时间：2026年11月26日
+功能：考试模式隐藏科目与图例
+修改时间：2026年11月27日11:50:19
 -->
 
 <!doctype html>
@@ -12,9 +12,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes"
     />
-    <title>
-      成中医 2023级 2026秋 总课表 · 6门课+技能训练（点击详情·滑动查看）
-    </title>
+    <title>成中医 2023级 2026秋 总课表 · 6门课+技能训练（点击详情·滑动查看）</title>
     <style>
       * {
         margin: 0;
@@ -1039,6 +1037,12 @@
         background: #ffd54f;
       }
 
+      /* 新增：考试模式下隐藏科目筛选行（含单选/多选）、组别行与图例，页面更干净 */
+      body.exam-mode .filter-bar,
+      body.exam-mode .legend {
+        display: none;
+      }
+
       /* 新增：考试模式下隐藏周次相关控件 */
       body.exam-mode .week-label,
       body.exam-mode .week-selector,
@@ -1153,18 +1157,10 @@
 
       <div class="controls">
         <div class="mode-switch" id="modeSwitch">
-          <button
-            class="mode-btn active"
-            data-mode="schedule"
-            onclick="setViewMode('schedule')"
-          >
+          <button class="mode-btn active" data-mode="schedule" onclick="setViewMode('schedule')">
             📚 课表模式
           </button>
-          <button
-            class="mode-btn"
-            data-mode="exam"
-            onclick="setViewMode('exam')"
-          >
+          <button class="mode-btn" data-mode="exam" onclick="setViewMode('exam')">
             🎯 考试模式
           </button>
         </div>
@@ -1188,23 +1184,9 @@
           <div class="subject-chips" id="subjectChips">
             <div class="chips-row" id="chipsRow"></div>
             <div class="filter-mode" id="filterMode">
-              <button
-                class="fm-btn active"
-                data-fm="single"
-                onclick="setFilterMode('single')"
-              >
-                单选
-              </button>
-              <button
-                class="fm-btn"
-                data-fm="multi"
-                onclick="setFilterMode('multi')"
-              >
-                多选
-              </button>
-              <span class="filter-tip" id="filterTip"
-                >单选：点科目只看该科，再点一次回到全部</span
-              >
+              <button class="fm-btn active" data-fm="single" onclick="setFilterMode('single')">单选</button>
+              <button class="fm-btn" data-fm="multi" onclick="setFilterMode('multi')">多选</button>
+              <span class="filter-tip" id="filterTip">单选：点科目只看该科，再点一次回到全部</span>
             </div>
           </div>
         </div>
@@ -1236,9 +1218,7 @@
       </div>
 
       <div class="stats" id="stats"></div>
-      <div class="footer">
-        点击课程 / 考试卡片查看详情 · 手机左右滑动查看每日课程
-      </div>
+      <div class="footer">点击课程 / 考试卡片查看详情 · 手机左右滑动查看每日课程</div>
     </div>
 
     <div class="modal-overlay" id="modalOverlay">
@@ -1284,7 +1264,7 @@
           date: "2026-12-04",
           start: "18:30",
           end: "20:30",
-          place: "宜宾教学二医院专用教室",
+          place: "待定（以教务通知为准）",
           paper: "",
           group: "",
         },
@@ -1293,7 +1273,7 @@
           date: "2026-12-21",
           start: "09:00",
           end: "11:00",
-          place: "宜宾教学二医院专用教室",
+          place: "待定（以教务通知为准）",
           paper: "",
           group: "",
         },
@@ -1302,7 +1282,7 @@
           date: "2026-12-25",
           start: "14:00",
           end: "16:00",
-          place: "宜宾教学二医院专用教室",
+          place: "待定（以教务通知为准）",
           paper: "",
           group: "",
         },
@@ -2423,3 +2403,4 @@
     </script>
   </body>
 </html>
+<!-- （注：内容由AI生成） -->
